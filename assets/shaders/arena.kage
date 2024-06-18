@@ -1,0 +1,196 @@
+//kage:unit pixels
+
+package main
+
+const ArenaSize = 192
+
+// https://www.shadertoy.com/view/4djSRW
+func hash(p vec3) float {
+	p = fract(p * .1031)
+	p += dot(p, p.zyx+31.32)
+	return fract((p.x + p.y) * p.z)
+	//return fract(sin(dot(p, vec2(27.16898, 38.90563))) * 5151.5473453)
+}
+
+func hash1(n float) float {
+	return fract(sin(n) * 43758.5453)
+}
+
+/*func noise(p vec3) float {
+	f := fract(p)
+	p = floor(p)
+
+	f = f * f * (3 - 2*f)
+	n := p.x + p.y*57 + p.z*113
+
+	return mix(
+		mix(
+			mix(hash1(n+0), hash1(n+1), f.x),
+			mix(hash1(n+57), hash1(n+58), f.x),
+			f.y,
+		),
+		mix(
+			mix(hash1(n+113), hash1(n+114), f.x),
+			mix(hash1(n+170), hash1(n+171), f.x),
+			f.y,
+		),
+		f.z,
+	)
+}*/
+
+// https://www.shadertoy.com/view/4sfGzS
+func noise(p vec3) float {
+	i := floor(p)
+	f := fract(p)
+	f = f * f * (3 - 2*f)
+
+	return mix(
+		mix(
+			mix(hash(i+vec3(0)), hash(i+vec3(1, 0, 0)), f.x),
+			mix(hash(i+vec3(0, 1, 0)), hash(i+vec3(1, 1, 0)), f.x),
+			f.y,
+		),
+		mix(
+			mix(hash(i+vec3(0, 0, 1)), hash(i+vec3(1, 0, 1)), f.x),
+			mix(hash(i+vec3(0, 1, 1)), hash(i+vec3(1, 1, 1)), f.x),
+			f.y,
+		),
+		f.z,
+	)
+}
+
+func fbm4(p vec3) float {
+	m := mat3(
+		0.00, 0.80, 0.60,
+		-0.80, 0.36, -0.48,
+		-0.60, -0.48, 0.64,
+	)
+	f := 0.
+	f += 0.5000 * noise(p)
+	p = m * p * 2.02
+	f += 0.2500 * noise(p)
+	p = m * p * 2.03
+	f += 0.1250 * noise(p)
+	p = m * p * 2.01
+	f += 0.0625 * noise(p)
+	return f / 0.9375
+}
+
+func sdHexagram(p vec2, r float) float {
+	k := vec4(-0.5, 0.8660254038, 0.5773502692, 1.7320508076)
+	p = abs(p)
+	p -= 2 * min(dot(k.xy, p), 0) * k.xy
+	p -= 2 * min(dot(k.yx, p), 0) * k.yx
+	p -= vec2(clamp(p.x, r*k.z, r*k.w), r)
+	return length(p) * sign(p.y)
+}
+
+func skybox(rd vec3) vec3 {
+	// Stars
+	ord := rd
+	rd += Seed
+	p := mod(floor(rd*512), 512)
+	h := hash(p)
+	v := step(h, 0)
+	// Debanding
+	v += h * 0.01
+	// Nebulaes
+	const nc = 0.15 //0.075 //0.025
+	_ = ord
+	clr := vec3(v)
+	n := fbm4(ord*0.5+Seed*16) - 0.5
+	n0 := abs(step(n, 0) * n)
+	n1 := abs((1 - step(n, 0)) * n)
+	neb := vec3(n0, 0, n0)*0.2 + vec3(0, n1, n1)*0.2
+	clr += neb
+
+	return clr
+}
+
+func smin(a, b, k float) float {
+	h := clamp(0.5+0.5*(b-a)/k, 0, 1)
+	return mix(b, a, h) - k*h*(1-h)
+}
+
+func planeColor(p vec3) vec4 {
+	const (
+		scale     = 8.
+		bias      = 0.5 * scale
+		intensity = 1.7  //1.8 //1.7
+		width     = 2.25 //1.3 //0.75
+	)
+
+	// Marker texture
+	floorUv := p.xz*MarkerResolutionFactor + imageSrc0Origin()
+	marker := imageSrc0UnsafeAt(floorUv)
+	// Grid line
+	in := step(0, p.x+bias) * (1 - step(ArenaSize, p.x-bias))
+	in *= step(0, p.z+bias) * (1 - step(ArenaSize, p.z-bias))
+	inx := step(0, p.x) * (1 - step(ArenaSize, p.x))
+	inz := step(0, p.z) * (1 - step(ArenaSize, p.z))
+	edge := step(inz+inx, 0)
+	// Lines width and intensity
+	fp := abs(fract((p.xz+scale/2)/scale)-0.5) * 2
+	ddx, ddy := dfdx(p.xz), dfdy(p.xz)
+	dt := (length(vec2(ddx.x, ddy.x)) + length(vec2(ddx.y, ddy.y))) * 1.5
+	d := smin((fp.x + (1 - inz)), (fp.y + (1 - inx)), 0.2)
+	d = d*(1-edge) + max(fp.x, fp.y)*edge
+	w := width - sign(marker.a)
+	d = clamp(exp(1-d*w/(1+dt))-intensity, 0, 1)
+	// Color blending
+	srcClr := mix(vec3(0.75), vec3(1), marker.a)
+	glowClr := mix(vec3(0, 0, 1), marker.rgb, marker.a)
+	clr := mix(glowClr, srcClr, max(d-marker.a*0.25, 0))
+
+	// TODO: glass?
+	//return mix(vec4(clr, 1), vec4(vec3(0.9), 1)*0.1, 1-d)*in
+
+	return vec4(clr, 1) * d * in
+}
+
+func ixSphere(ro, rd, ce vec3, ra float) float {
+	oc := ro - ce
+	b := dot(oc, rd)
+	c := dot(oc, oc) - ra*ra
+	h := b*b - c
+	if h < 0 {
+		return -1
+	}
+	return -b - sqrt(h)
+}
+
+func ixPlane(ro, rd vec3, plane vec4) float {
+	return -(dot(ro, plane.xyz) + plane.w) / dot(rd, plane.xyz)
+}
+
+var Seed float
+var CameraPosition vec3
+var CameraPVMatrixInv mat4
+var MarkerResolutionFactor float
+var GlobalAoe vec4 // TODO:
+
+func Fragment(dst vec4, src vec2, color vec4) vec4 {
+	screenUv := dst.xy - imageDstOrigin()
+	uv := screenUv/imageDstSize()*2 - 1
+	uv.xy *= -1 // Note: reverse uv, why? idk
+	near4 := CameraPVMatrixInv * normalize(vec4(uv, -1, 1))
+	far4 := CameraPVMatrixInv * normalize(vec4(uv, 1, 1))
+	far3 := far4.xyz / far4.w
+	// Ray calculation
+	ro := near4.xyz / near4.w
+	rd := normalize(far3 - ro)
+	ro += fract(CameraPosition)
+
+	plane := vec4(normalize(vec3(0, 1, 0)), 10)
+	d := ixPlane(ro, rd, plane)
+	_ = d
+
+	clr := vec4(0, 0, 0.05, 1)
+	clr.rgb += skybox(rd)
+	if d > 0 {
+		p := ro + rd*d + floor(CameraPosition)
+		clr += planeColor(p)
+	}
+
+	return clr
+}

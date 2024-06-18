@@ -1,0 +1,42 @@
+//kage:unit pixels
+
+package main
+
+const (
+	Filled = 0.5
+	Circle = 1.5
+	Arrow  = 2.5
+	XCross = 3.5
+)
+
+func rotate(p vec2, a float) vec2 {
+	s, c := sin(a), cos(a)
+	return mat2(c, s, -s, c) * p
+}
+
+func Fragment(dst vec4, src vec2, color vec4) vec4 {
+	if color.r < Filled {
+		return vec4(1, 0, 0, color.g)
+	}
+	var d float
+	if color.r < Circle {
+		d = max(-sign(length(src)-1), 0)
+	} else if color.r < Arrow {
+		q := vec2(0.5, 1)
+		p := rotate(src, color.b)
+		p.x = abs(p.x)
+		a := p - q*clamp(dot(p, q)/dot(q, q), 0, 1)
+		b := p - q*vec2(clamp(p.x/q.x, 0, 1), 1)
+		s := -sign(q.y)
+		dt := min(
+			vec2(dot(a, a), s*(p.x*q.y-p.y*q.x)),
+			vec2(dot(b, b), s*(p.y-q.y)),
+		)
+		d = max(sign(sqrt(dt.x)*sign(dt.y)), 0)
+	} else if color.r < XCross {
+		r := color.a
+		p := abs(rotate(src, color.b))
+		d = max(-sign(length(p-min(p.x+p.y, 8)*0.5)-r), 0)
+	}
+	return vec4(1, 0, 0, color.g*d)
+}

@@ -1,0 +1,193 @@
+//kage:unit pixels
+
+package main
+
+func smin(a, b, k float) float {
+	h := clamp(0.5+0.5*(b-a)/k, 0, 1)
+	return mix(b, a, h) - k*h*(1-h)
+}
+
+func rotateX(a float) mat3 {
+	c := cos(a)
+	s := sin(a)
+	return mat3(
+		vec3(1., 0., 0.),
+		vec3(0., c, -s),
+		vec3(0., s, c),
+	)
+}
+
+// Rotation matrix around the Y axis
+func rotateY(a float) mat3 {
+	c := cos(a)
+	s := sin(a)
+	return mat3(
+		vec3(c, 0., s),
+		vec3(0., 1., 0.),
+		vec3(-s, 0., c),
+	)
+}
+
+// Rotation matrix around the Z axis
+func rotateZ(a float) mat3 {
+	c := cos(a)
+	s := sin(a)
+	return mat3(
+		vec3(c, -s, 0.),
+		vec3(s, c, 0.),
+		vec3(0., 0., 1.),
+	)
+}
+
+func sdCapsule(p, a, b vec3, r float) float {
+	pa := p - a
+	ba := b - a
+	h := clamp(dot(pa, ba)/dot(ba, ba), 0, 1)
+	return length(pa-ba*h) - r
+}
+
+// https://iquilezles.org/articles/distfunctions/
+func sdHexPrism(p vec3, h vec2) float {
+	p.xy = p.yx // Note: not sure this is okay (?)
+	k := vec3(-0.8660254, 0.5, 0.57735)
+	p = abs(p)
+	p.xy -= 2 * min(dot(k.xy, p.xy), 0) * k.xy
+	d := vec2(
+		length(p.xy-vec2(clamp(p.x, -k.z*h.x, k.z*h.x), h.x))*sign(p.y-h.x),
+		p.z-h.y,
+	)
+
+	return min(max(d.x, d.y), 0) + length(max(d, 0))
+}
+
+func sdFinger(p vec3, a, b, c, d vec3) float {
+	const r = 0.175
+	dd := sdCapsule(p, a, b, r)
+	dd = min(dd, sdCapsule(p, b, c, r))
+	dd = min(dd, sdCapsule(p, c, d, r))
+	return dd
+}
+
+func sdHand(p vec3) float {
+	const k = 0.05
+
+	p -= vec3(0, 1, 0)
+	p = rotateX(Rotation.x) * rotateY(Rotation.y) * rotateZ(Rotation.z) * p
+	p += vec3(0, 1, 0)
+	d := sdHexPrism(p-vec3(0, 0.8, 0), vec2(0.7, 0.005)) - 0.1
+	// Pinky
+	b := Fingers[4]
+	d = smin(d, sdFinger(p, b[0].xyz, b[1].xyz, b[2].xyz, b[3].xyz), k)
+	// Ring
+	b = Fingers[3]
+	d = smin(d, sdFinger(p, b[0].xyz, b[1].xyz, b[2].xyz, b[3].xyz), k)
+	// Middle
+	b = Fingers[2]
+	d = smin(d, sdFinger(p, b[0].xyz, b[1].xyz, b[2].xyz, b[3].xyz), k)
+	// Index
+	b = Fingers[1]
+	d = smin(d, sdFinger(p, b[0].xyz, b[1].xyz, b[2].xyz, b[3].xyz), k)
+	// Thumb
+	b = Fingers[0]
+	d = smin(d, sdFinger(p, b[0].xyz, b[1].xyz, b[2].xyz, b[3].xyz), k)
+	return d
+}
+
+func rayMarch(ro, rd vec3, start, end float) float {
+	const (
+		MaxSteps  = 64.
+		Precision = 0.01 // 0.005
+	)
+
+	depth := start
+	for i := 0; i < MaxSteps; i++ {
+		p := ro + depth*rd
+		d := sdHand(p)
+		depth += d
+		if d < Precision || depth > end {
+			break
+		}
+	}
+
+	return depth
+}
+
+func phong(lightDir, normal, rd, clr vec3) vec3 {
+	// ambient
+	ambient := clr * 0.5
+
+	// diffuse
+	dotLN := clamp(dot(lightDir, normal), 0., 1.)
+	diffuse := clr * dotLN
+
+	// specular
+	halfwayDir := normalize(lightDir + normal)
+	specular := vec3(0.25) * pow(max(dot(normal, halfwayDir), 0.), 16.)
+
+	return ambient + diffuse + specular
+}
+
+func softShadow(ro, rd vec3, mint, tmax float) float {
+	const (
+		MaxSteps  = 32.
+		Precision = 0.001
+	)
+
+	res := 1.
+	t := mint
+	for i := 0.; i < MaxSteps; i++ {
+		h := sdHand(ro + rd*t)
+		res = min(res, 8.*h/t)
+		t += clamp(h, 0.02, 0.10)
+		if h < Precision || t > tmax {
+			break
+		}
+	}
+
+	return clamp(res, 0., 1.)
+}
+
+func calcNormal(p vec3) vec3 {
+	e := vec2(1., -1.) * 0.0005
+
+	return normalize(
+		e.xyy*sdHand(p+e.xyy) +
+			e.yyx*sdHand(p+e.yyx) +
+			e.yxy*sdHand(p+e.yxy) +
+			e.xxx*sdHand(p+e.xxx),
+	)
+}
+
+var Rotation vec3
+var Fingers [5]mat4
+
+func Fragment(dst vec4, src vec2, color vec4) vec4 {
+	const MaxDepth = 4.
+
+	src.y += 0.25
+	src.x -= 0.25
+	src /= 1.25
+	ro := vec3(0., 0., -2.5)
+	rd := normalize(vec3(src, 1.)) // ray direction
+	d := rayMarch(ro, rd, 0., MaxDepth)
+
+	var clr vec3
+	if d > MaxDepth {
+		//return vec4(vec3(0.1), 1)
+		return vec4(0)
+	} else {
+		p := ro + rd*d
+		// Light stuff
+		normal := calcNormal(p)
+		lightPosition := ro - vec3(0, 2., 32.)
+		lightDirection := normalize(lightPosition - p)
+		lightIntensity := 1.
+
+		softShadows := clamp(softShadow(p, lightDirection, 0.02, 2.5), 0.1, 1.)
+
+		clr = lightIntensity * phong(lightDirection, normal, rd, vec3(0.8, 0.4, 0.8))
+		clr *= softShadows
+	}
+
+	return vec4(clr, 1)
+}
