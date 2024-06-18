@@ -9,6 +9,7 @@ import (
 var (
 	AnimationIdle        *Animation
 	AnimationShootFinger *Animation
+	AnimationShootPistol *Animation
 )
 
 func init() {
@@ -19,6 +20,11 @@ func init() {
 
 	AnimationShootFinger = &Animation{}
 	if err := AnimationShootFinger.Deserialize(assets.AnimShootFingerSrc); err != nil {
+		log.Fatal("err: ", err)
+	}
+
+	AnimationShootPistol = &Animation{}
+	if err := AnimationShootPistol.Deserialize(assets.AnimShootPistolSrc); err != nil {
 		log.Fatal("err: ", err)
 	}
 }

@@ -14,6 +14,7 @@ const (
 	PlayerMovementSpeed = 1.
 
 	ShootingTicks   = 20
+	ShootingCD      = 30
 	DashingTicks    = 15
 	DashingCD       = 60
 	DashingSpeedMod = 3
@@ -46,12 +47,14 @@ type Player struct {
 
 	Status status
 
-	RightHand *hand.Hand
-	RightAnim *hand.AnimationInstance
-	LeftHand  *hand.Hand
-	LeftAnim  *hand.AnimationInstance
-	Active    *state
-	Cooldown  *state
+	ActiveHand *hand.Hand
+	ActiveAnim *hand.AnimationInstance
+	RightHand  *hand.Hand
+	RightAnim  *hand.AnimationInstance
+	LeftHand   *hand.Hand
+	LeftAnim   *hand.AnimationInstance
+	Active     *state
+	Cooldown   *state
 
 	SpeedMod           float64
 	ProjectileSpeedMod float64
@@ -70,6 +73,7 @@ func newPlayer() *Player {
 		Active:    &state{},
 		Cooldown:  &state{},
 	}
+	p.ActiveHand = p.RightHand
 	p.resetModifiers()
 
 	return p
@@ -89,11 +93,20 @@ func (p *Player) resetModifiers() {
 
 func (p *Player) Update(ctx *PlayerContext) {
 	// Shooting
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+	if p.Status == idle && p.Cooldown.Shooting == 0 && ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		p.Active.Shooting = ShootingTicks
+		p.Cooldown.Shooting = ShootingCD
 		p.Status = shooting
 		// TODO: swap hands
-		p.RightAnim = hand.AnimationShootFinger.NewInstance(p.RightHand, false)
+		if p.ActiveHand == p.RightHand {
+			p.RightAnim = hand.AnimationShootPistol.NewInstance(p.RightHand, false)
+			p.ActiveHand = p.LeftHand
+			p.ActiveAnim = p.LeftAnim
+		} else {
+			p.LeftAnim = hand.AnimationShootPistol.NewInstance(p.LeftHand, false)
+			p.ActiveHand = p.RightHand
+			p.ActiveAnim = p.RightAnim
+		}
 	}
 	// Dashing
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
@@ -122,7 +135,11 @@ func (p *Player) Update(ctx *PlayerContext) {
 			5,
 			p.ProjectileSpeedMod,
 		))
-		p.RightAnim = nil
+		if p.ActiveHand == p.RightHand {
+			p.LeftAnim = nil
+		} else {
+			p.RightAnim = nil
+		}
 	}
 	// New states
 	switch {
