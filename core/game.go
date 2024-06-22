@@ -2,11 +2,15 @@ package core
 
 import (
 	"fmt"
+	"image"
 	"math"
 	"math/rand"
+	"sort"
 
 	"github.com/Zyko0/Alapae/assets"
 	"github.com/Zyko0/Alapae/core/aoe"
+	"github.com/Zyko0/Alapae/core/boss"
+	"github.com/Zyko0/Alapae/core/entity"
 	"github.com/Zyko0/Alapae/graphics"
 	"github.com/Zyko0/Alapae/input"
 	"github.com/go-gl/mathgl/mgl64"
@@ -27,17 +31,27 @@ type Game struct {
 
 	camera   *Camera
 	player   *Player
-	boss     Boss
-	entities []Entity
+	boss     entity.Boss
+	entities []entity.Entity
+
+	bulletOffscreen *ebiten.Image
 }
 
-func NewGame(camera *Camera) *Game {
+func NewGame(camera *Camera, resolution image.Rectangle) *Game {
+	b := boss.NewSmokeMask(mgl64.Vec3{
+		192 / 2,
+		graphics.SpriteScale,
+		192,
+	})
 	return &Game{
 		seed:  rand.Float32(),
 		floor: newFloor(),
 
-		camera: camera,
-		player: newPlayer(),
+		camera:          camera,
+		player:          newPlayer(),
+		boss:            b,
+		entities:        []entity.Entity{b},
+		bulletOffscreen: ebiten.NewImage(resolution.Dx(), resolution.Dy()),
 	}
 }
 
@@ -90,61 +104,82 @@ func (g *Game) Update() {
 				Rotation:     0,
 				RotationIncr: 0.025,
 			},*/
-			&aoe.Arrow{
+			/*&aoe.Arrow{
 				X:        ArenaSize / 2,
 				Y:        ArenaSize / 2,
 				Size:     50,
 				Rotation: 0,
+			},*/
+			&aoe.CircleBorder{
+				X:      ArenaSize / 2,
+				Y:      ArenaSize / 2,
+				Radius: 45,
 			},
 			60, 120000,
 		))
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
-		g.seed = rand.Float32()
 	}
 	// End debug
 
 	// Inputs and camera
 	g.processInput()
 	g.camera.Update()
-	// Players actions
-	ctx := &PlayerContext{
+	// Updates
+	ctx := &entity.Context{
+		CameraRight:     g.camera.right,
+		CameraUp:        g.camera.up,
 		PlayerPosition:  g.camera.position,
 		PlayerDirection: g.camera.direction,
+		Boss:            g.boss,
 	}
-	g.player.Update(ctx)
-	// TODO: g.boss.Update(ctx)
-	g.entities = append(g.entities, ctx.Projectiles...)
 	// Entities update
 	var n int
-	for _, e := range g.entities {
-		e.Update()
-		if e.Dead() {
+	for _, p := range g.entities {
+		p.Update(ctx)
+		if p.Dead() {
 			continue
 		}
-		g.entities[n] = e
+		g.entities[n] = p
 		n++
 	}
 	g.entities = g.entities[:n]
+	// Player update
+	g.player.Update(ctx)
+	g.entities = append(g.entities, ctx.Entities...)
+
 	// TODO: collisions
-	// Update floor AoE markers
+	// Update/add floor AoE markers
+	for _, m := range ctx.Markers {
+		g.floor.AddMarker(m)
+	}
 	g.floor.Update()
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	pos := g.camera.Position()
+	pvinv := g.camera.ProjectionMatrix().Mul4(g.camera.ViewMatrix()).Inv()
+
+	// Draw entities
+	ctx := &graphics.Context{
+		ScreenBounds:   screen.Bounds(),
+		CameraPosition: pos,
+		CameraRight:    g.camera.right,
+		CameraUp:       g.camera.up,
+		ProjView:       g.camera.proj.Mul4(g.camera.view),
+		ViewInv:        g.camera.ViewMatrix().Inv(),
+	}
+	var vx []ebiten.Vertex
+	var ix []uint16
 	// Refresh AoE markers on the floor
-	g.floor.Draw()
+	g.floor.Draw(g.boss.MarkerShape())
 	// Draw arena scene
-	vx, ix := graphics.AppendRectVerticesIndices(
-		nil, nil, 0, &graphics.RectOpts{
+	vx, ix = graphics.AppendRectVerticesIndices(
+		vx[:0], ix[:0], 0, &graphics.RectOpts{
 			DstWidth:  float32(screen.Bounds().Dx()),
 			DstHeight: float32(screen.Bounds().Dy()),
 			SrcWidth:  float32(screen.Bounds().Dx()),
 			SrcHeight: float32(screen.Bounds().Dy()),
 		},
 	)
-	pos := g.camera.Position()
-	pvinv := g.camera.ProjectionMatrix().Mul4(g.camera.ViewMatrix()).Inv()
 	screen.DrawTrianglesShader(vx, ix, assets.ShaderArena(), &ebiten.DrawTrianglesShaderOptions{
 		Uniforms: map[string]any{
 			"Seed":                   g.seed,
@@ -156,24 +191,24 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			g.floor.Image,
 		},
 	})
-	// Draw entities
-	ctx := &graphics.Context{
-		CameraPosition: pos,
-		CameraRight:    g.camera.right,
-		CameraUp:       g.camera.up,
-		ProjView:       g.camera.proj.Mul4(g.camera.view),
-		ViewInv:        g.camera.ViewMatrix().Inv(),
-	}
-	vx, ix = vx[:0], ix[:0]
+	// Entities
 	index := 0
-	// TODO: sort them by Z
-	for _, e := range g.entities {
-		vx, ix = e.AppendVerticesIndices(vx, ix, &index, ctx)
+	vx, ix = vx[:0], ix[:0]
+	// TODO: cache the lengths
+	sort.SliceStable(g.entities, func(i, j int) bool {
+		li := pos.Sub(g.entities[i].Position()).LenSqr()
+		lj := pos.Sub(g.entities[j].Position()).LenSqr()
+		return li > lj
+	})
+	for _, p := range g.entities {
+		vx, ix = p.AppendVerticesIndices(vx, ix, &index, ctx)
 	}
 	graphics.ScreenVertices(vx, screen.Bounds().Dx(), screen.Bounds().Dy())
-	//fmt.Println("len entities:", len(g.entities), "len vx:", len(vx), "len ix:", len(ix))
-	// TODO: add src images corresponding to billboard sprites
-	screen.DrawTrianglesShader(vx, ix, assets.ShaderEntity(), nil)
+	screen.DrawTrianglesShader(vx, ix, assets.ShaderEntity(), &ebiten.DrawTrianglesShaderOptions{
+		Images: [4]*ebiten.Image{
+			g.boss.Image(),
+		},
+	})
 
 	// Player hands
 	g.player.DrawHands(screen, ctx)

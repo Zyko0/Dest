@@ -194,7 +194,7 @@ var TestAnimation *asset.LiveAsset[*Animation]
 func init() {
 	var err error
 
-	TestAnimation, err = asset.NewLiveAssetFunc("assets/animations/shoot_pistol.pose", func(b []byte) (*Animation, error) {
+	TestAnimation, err = asset.NewLiveAssetFunc("assets/animations/run.pose", func(b []byte) (*Animation, error) {
 		a := &Animation{}
 		if err := a.Deserialize(b); err != nil {
 			return nil, err

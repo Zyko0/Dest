@@ -20,6 +20,7 @@ const (
 	ShapeCircle
 	ShapeArrow
 	ShapeXCross
+	ShapeCircleBorder
 )
 
 // Circle
@@ -117,5 +118,32 @@ func (c *XCross) AppendVerticesIndices(vx []ebiten.Vertex, ix []uint16, index *i
 	})
 	*index++
 
+	return vx, ix
+}
+
+// Circle border
+
+type CircleBorder Circle
+
+func (cb *CircleBorder) Update() {}
+
+func (cb *CircleBorder) AppendVerticesIndices(vx []ebiten.Vertex, ix []uint16, index *int, factor, intensity float32) ([]ebiten.Vertex, []uint16) {
+	x, y, r := cb.X*factor, cb.Y*factor, cb.Radius*factor
+	vx, ix = graphics.AppendRectVerticesIndices(vx, ix, *index, &graphics.RectOpts{
+		DstX:      x - r,
+		DstY:      y - r,
+		SrcX:      -1,
+		SrcY:      -1,
+		DstWidth:  r * 2,
+		DstHeight: r * 2,
+		SrcWidth:  2,
+		SrcHeight: 2,
+		R:         float32(ShapeCircleBorder),
+		G:         intensity,
+		B:         0,
+		A:         0,
+	})
+	*index++
+	
 	return vx, ix
 }

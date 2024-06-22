@@ -1,11 +1,12 @@
 package core
 
 import (
+	"image/color"
+
 	"github.com/Zyko0/Alapae/assets"
 	"github.com/Zyko0/Alapae/core/entity"
 	"github.com/Zyko0/Alapae/core/hand"
 	"github.com/Zyko0/Alapae/graphics"
-	"github.com/go-gl/mathgl/mgl64"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
@@ -13,9 +14,9 @@ import (
 const (
 	PlayerMovementSpeed = 1.
 
-	ShootingTicks   = 20
+	ShootingTicks   = 15
 	ShootingCD      = 30
-	DashingTicks    = 15
+	DashingTicks    = 10
 	DashingCD       = 60
 	DashingSpeedMod = 3
 )
@@ -48,11 +49,8 @@ type Player struct {
 	Status status
 
 	ActiveHand *hand.Hand
-	ActiveAnim *hand.AnimationInstance
 	RightHand  *hand.Hand
-	RightAnim  *hand.AnimationInstance
 	LeftHand   *hand.Hand
-	LeftAnim   *hand.AnimationInstance
 	Active     *state
 	Cooldown   *state
 
@@ -68,8 +66,8 @@ func newPlayer() *Player {
 		Health:    100,
 		MaxHealth: 100,
 
-		RightHand: hand.New(),
-		LeftHand:  hand.New(),
+		RightHand: hand.New(hand.Right),
+		LeftHand:  hand.New(hand.Left),
 		Active:    &state{},
 		Cooldown:  &state{},
 	}
@@ -79,19 +77,12 @@ func newPlayer() *Player {
 	return p
 }
 
-type PlayerContext struct {
-	PlayerPosition  mgl64.Vec3
-	PlayerDirection mgl64.Vec3
-
-	Projectiles []Entity
-}
-
 func (p *Player) resetModifiers() {
 	p.SpeedMod = 1
-	p.ProjectileSpeedMod = 4
+	p.ProjectileSpeedMod = 2
 }
 
-func (p *Player) Update(ctx *PlayerContext) {
+func (p *Player) Update(ctx *entity.Context) {
 	// Shooting
 	if p.Status == idle && p.Cooldown.Shooting == 0 && ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		p.Active.Shooting = ShootingTicks
@@ -99,13 +90,11 @@ func (p *Player) Update(ctx *PlayerContext) {
 		p.Status = shooting
 		// TODO: swap hands
 		if p.ActiveHand == p.RightHand {
-			p.RightAnim = hand.AnimationShootPistol.NewInstance(p.RightHand, false)
+			p.RightHand.Anim = hand.AnimationShootFinger.NewInstance(p.RightHand, false)
 			p.ActiveHand = p.LeftHand
-			p.ActiveAnim = p.LeftAnim
 		} else {
-			p.LeftAnim = hand.AnimationShootPistol.NewInstance(p.LeftHand, false)
+			p.LeftHand.Anim = hand.AnimationShootFinger.NewInstance(p.LeftHand, false)
 			p.ActiveHand = p.RightHand
-			p.ActiveAnim = p.RightAnim
 		}
 	}
 	// Dashing
@@ -117,8 +106,10 @@ func (p *Player) Update(ctx *PlayerContext) {
 	}
 	// Hand animation test
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		//p.RightAnim = hand.TestAnimation.Value().NewInstance(p.RightHand, false)
-		//p.LeftAnim = hand.TestAnimation.Value().NewInstance(p.LeftHand, true)
+		/*ctx.Entities = append(ctx.Entities, entity.NewComet(
+			mgl64.Vec3{192 / 2, 100, 192 / 2},
+			1, 2,
+		))*/
 	}
 
 	// Update current effects
@@ -128,17 +119,22 @@ func (p *Player) Update(ctx *PlayerContext) {
 	// Ending status
 	switch {
 	case p.Status == shooting && p.Active.Shooting == 0:
-		ctx.Projectiles = append(ctx.Projectiles, entity.NewProjectile(
-			// TODO: handle right/left hand for the projectile to originate from
-			ctx.PlayerPosition.Add(ctx.PlayerDirection.Mul(20)),
+		off := ctx.PlayerDirection.Mul(0.5 * graphics.SpriteScale)
+		off = off.Add(ctx.CameraRight.Mul(0.75 * p.ActiveHand.ShotRightCoeff()))
+		off = off.Sub(ctx.CameraUp.Mul(0.5))
+
+		ctx.Entities = append(ctx.Entities, entity.NewProjectile(
+			ctx.PlayerPosition.Add(off),
 			ctx.PlayerDirection,
-			5,
+			0.1,
 			p.ProjectileSpeedMod,
+			color.RGBA{0, 0, 255, 255},
+			color.White,
 		))
 		if p.ActiveHand == p.RightHand {
-			p.LeftAnim = nil
+			p.LeftHand.Anim = nil
 		} else {
-			p.RightAnim = nil
+			p.RightHand.Anim = nil
 		}
 	}
 	// New states
@@ -150,19 +146,19 @@ func (p *Player) Update(ctx *PlayerContext) {
 		p.Status = shooting
 	default:
 		p.Status = idle
-		if p.RightAnim == nil {
-			p.RightAnim = hand.AnimationIdle.NewInstance(p.RightHand, false)
+		if p.RightHand.Anim == nil {
+			p.RightHand.Anim = hand.AnimationIdle.NewInstance(p.RightHand, false)
 		}
-		if p.LeftAnim == nil {
-			p.LeftAnim = hand.AnimationIdle.NewInstance(p.LeftHand, true)
+		if p.LeftHand.Anim == nil {
+			p.LeftHand.Anim = hand.AnimationIdle.NewInstance(p.LeftHand, true)
 		}
 	}
 	// Update animations
-	if p.RightAnim != nil {
-		p.RightAnim.Update(p.RightHand)
+	if p.RightHand.Anim != nil {
+		p.RightHand.Anim.Update(p.RightHand)
 	}
-	if p.LeftAnim != nil {
-		p.LeftAnim.Update(p.LeftHand)
+	if p.LeftHand.Anim != nil {
+		p.LeftHand.Anim.Update(p.LeftHand)
 	}
 }
 
@@ -181,13 +177,12 @@ func (p *Player) DrawHands(screen *ebiten.Image, ctx *graphics.Context) {
 		DstHeight: size,
 		SrcWidth:  2,
 		SrcHeight: 2,
-		R:         0,
+		R:         p.RightHand.Glow,
 		G:         0,
 		B:         0,
 		A:         0,
 	})
 	var data []float32
-	// Right
 	data = p.RightHand.AppendData(data)
 	screen.DrawTrianglesShader(vx, ix, assets.ShaderHands(), &ebiten.DrawTrianglesShaderOptions{
 		Uniforms: map[string]any{ // TODO: might be useless uniforms
@@ -209,12 +204,11 @@ func (p *Player) DrawHands(screen *ebiten.Image, ctx *graphics.Context) {
 		DstHeight: size,
 		SrcWidth:  -2,
 		SrcHeight: 2,
-		R:         0,
+		R:         p.LeftHand.Glow,
 		G:         0,
 		B:         0,
 		A:         0,
 	})
-	// Right
 	data = p.LeftHand.AppendData(data[:0])
 	screen.DrawTrianglesShader(vx, ix, assets.ShaderHands(), &ebiten.DrawTrianglesShaderOptions{
 		Uniforms: map[string]any{ // TODO: might be useless uniforms

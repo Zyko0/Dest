@@ -2,30 +2,30 @@ package hand
 
 import "github.com/go-gl/mathgl/mgl64"
 
-type HandIndices struct {
-	Thumb  int
-	Index  int
-	Middle int
-	Ring   int
-	Pinky  int
-}
+type Side byte
 
-var (
-	Right = &HandIndices{
-		Thumb:  0,
-		Index:  1,
-		Middle: 2,
-		Ring:   3,
-		Pinky:  4,
-	}
+const (
+	Right Side = iota
+	Left
+)
+
+type Weapon byte
+
+const (
+	WeaponFinger Weapon = iota
+	WeaponPistol
 )
 
 type Hand struct {
+	Side     Side
+	Weapon   Weapon
+	Anim     *AnimationInstance
+	Glow     float32
 	Rotation mgl64.Vec3
 	Fingers  [5]*Finger
 }
 
-func New() *Hand {
+func New(side Side) *Hand {
 	fingers := [5]*Finger{{}, {}, {}, {}, {}}
 	*fingers[0] = *Thumb
 	*fingers[1] = *Index
@@ -34,6 +34,7 @@ func New() *Hand {
 	*fingers[4] = *Pinky
 
 	return &Hand{
+		Side:    side,
 		Fingers: fingers,
 	}
 }
@@ -63,4 +64,15 @@ func (h *Hand) AsStep() *HandStep {
 	}
 
 	return hs
+}
+
+func (h *Hand) ShotRightCoeff() float64 {
+	switch h.Side {
+	case Right:
+		return -1
+	case Left:
+		return 1
+	default:
+		return 0
+	}
 }

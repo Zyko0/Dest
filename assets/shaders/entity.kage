@@ -3,10 +3,65 @@
 package main
 
 const (
+	Unit  = 256
+	Pi    = 3.141592
+	TwoPi = 2 * Pi
+)
+
+const (
 	Sprite = 0.5
+	Bullet = 1.5
+	Impact = 2.5
 	// TODO: volume
 )
 
+func unpackColor(v float) vec3 {
+	iv := int(v)
+	return vec3(
+		float((iv>>16)&255),
+		float((iv>>8)&255),
+		float(iv&255),
+	) / 255
+}
+
+func unpackAngleOrigin(v float) (float, vec4) {
+	iv := int(v)
+	return float((iv>>16)&0xff) / 0xff, vec4(
+		float((iv>>12)&0b1111),
+		float((iv>>8)&0b1111),
+		float((iv>>4)&0b1111),
+		float(iv&0b1111),
+	)
+}
+
+func rotate(a float) mat2 {
+	s := sin(a)
+	c := cos(a)
+	return mat2(c, s, -s, c)
+}
+
 func Fragment(dst vec4, src vec2, color vec4) vec4 {
-	return vec4(1, 0, 1, 1)
+	if color.r < Sprite {
+		angle, data := unpackAngleOrigin(color.b)
+		origin := data.xy * Unit
+		size := data.zw * Unit
+		off := vec2(origin + size/2)
+		uv := (src - imageSrc0Origin()) / color.g
+		uv = rotate(angle*TwoPi)*(uv-off) + off
+		uv = clamp(uv, origin, origin+size)
+		clr := imageSrc0UnsafeAt(uv + imageSrc0Origin())
+		return clr * color.a
+	}
+	uv := src - imageSrc0Origin()
+	var d, a float
+	var clr vec3
+	if color.r < Bullet {
+		clr0 := unpackColor(color.g)
+		clr1 := unpackColor(color.b)
+		d = length(uv) - 1
+		a = step(d, 0)
+		d = abs(d * 1.5)
+		clr = mix(clr0, clr1, d)
+	}
+	return vec4(clr, 1) * a
 }

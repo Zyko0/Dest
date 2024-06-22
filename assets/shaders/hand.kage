@@ -122,7 +122,7 @@ func phong(lightDir, normal, rd, clr vec3) vec3 {
 
 	// specular
 	halfwayDir := normalize(lightDir + normal)
-	specular := vec3(0.25) * pow(max(dot(normal, halfwayDir), 0.), 16.)
+	specular := vec3(0.25) * pow(max(dot(normal, halfwayDir), 0.), 64.)
 
 	return ambient + diffuse + specular
 }
@@ -173,19 +173,30 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 
 	var clr vec3
 	if d > MaxDepth {
-		//return vec4(vec3(0.1), 1)
-		return vec4(0)
+		// Glow
+		d = 1 - max(sdHand(ro+rd*4), 0)
+		return vec4(vec3(1, 0.25, 0), 1) * (d * color.r)
 	} else {
 		p := ro + rd*d
 		// Light stuff
 		normal := calcNormal(p)
-		lightPosition := ro - vec3(0, 2., 32.)
+		lightPosition := ro - vec3(-4, 2., 32.)
 		lightDirection := normalize(lightPosition - p)
 		lightIntensity := 1.
 
 		softShadows := clamp(softShadow(p, lightDirection, 0.02, 2.5), 0.1, 1.)
 
-		clr = lightIntensity * phong(lightDirection, normal, rd, vec3(0.8, 0.4, 0.8))
+		/*p = abs(sin(abs(p * 16.)))
+		t := fract(p.x * p.y * p.z)*/
+		/*p = abs(normal*8)
+		t := fract(sin(p.x+p.y+p.z))*/
+		//t := fract(length(p/2))
+		//p.y+=2
+		//t := sin(p.z*p.y*p.x*32)
+		t := 0.
+		clr = mix(vec3(0.8), vec3(1, 0, 0), t)
+		//clr = vec3(0.8)
+		clr = lightIntensity * phong(lightDirection, normal, rd, clr)
 		clr *= softShadows
 	}
 

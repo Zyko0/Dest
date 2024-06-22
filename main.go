@@ -1,12 +1,14 @@
 package main
 
 import (
+	"image"
 	"log"
 
 	"github.com/Zyko0/Alapae/core"
 	"github.com/Zyko0/Alapae/input"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 const (
@@ -34,7 +36,7 @@ func New() *Game {
 			mgl64.Vec3{0, 0, 0},
 			45,
 			float64(ScreenWidth)/float64(ScreenHeight),
-		)),
+		), image.Rect(0, 0, ScreenWidth, ScreenHeight)),
 	}
 }
 
@@ -46,6 +48,15 @@ func (g *Game) Update() error {
 		// TODO: don't treat input instead of returning here, but keep the
 		// game running
 		return nil
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
+		// TODO: make this less brutal
+		g.game = core.NewGame(core.NewCamera(
+			mgl64.Vec3{0, 0, 0},
+			mgl64.Vec3{0, 0, 0},
+			45,
+			float64(ScreenWidth)/float64(ScreenHeight),
+		), image.Rect(0, 0, ScreenWidth, ScreenHeight))
 	}
 
 	g.game.Update()
