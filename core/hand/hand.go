@@ -39,6 +39,13 @@ func New(side Side) *Hand {
 	}
 }
 
+func (h *Hand) ShootAnimation() *Animation {
+	if h.Weapon == WeaponFinger {
+		return AnimationShootFinger
+	}
+	return AnimationShootPistol
+}
+
 func (h *Hand) AppendData(data []float32) []float32 {
 	for _, f := range h.Fingers {
 		points := f.ResolvePoints()

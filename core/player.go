@@ -4,6 +4,7 @@ import (
 	"image/color"
 
 	"github.com/Zyko0/Alapae/assets"
+	"github.com/Zyko0/Alapae/core/building"
 	"github.com/Zyko0/Alapae/core/entity"
 	"github.com/Zyko0/Alapae/core/hand"
 	"github.com/Zyko0/Alapae/graphics"
@@ -43,19 +44,14 @@ const (
 )
 
 type Player struct {
-	Health    int
-	MaxHealth int
-
-	Status status
-
+	Status     status
+	Stats      *building.Statistics
 	ActiveHand *hand.Hand
 	RightHand  *hand.Hand
 	LeftHand   *hand.Hand
 	Active     *state
 	Cooldown   *state
-
-	SpeedMod           float64
-	ProjectileSpeedMod float64
+	SpeedMod   float64
 	// TODO: hands
 	// TODO: powerups
 	// TODO: curses
@@ -63,9 +59,8 @@ type Player struct {
 
 func newPlayer() *Player {
 	p := &Player{
-		Health:    100,
-		MaxHealth: 100,
-
+		Status:    idle,
+		Stats:     building.NewStatistics(),
 		RightHand: hand.New(hand.Right),
 		LeftHand:  hand.New(hand.Left),
 		Active:    &state{},
@@ -79,22 +74,29 @@ func newPlayer() *Player {
 
 func (p *Player) resetModifiers() {
 	p.SpeedMod = 1
-	p.ProjectileSpeedMod = 2
+	// TODO: ?
 }
 
 func (p *Player) Update(ctx *entity.Context) {
+	var hands []*hand.Hand
+	if p.Stats.Synced {
+		hands = []*hand.Hand{p.RightHand, p.LeftHand}
+	} else {
+		hands = []*hand.Hand{p.ActiveHand}
+	}
 	// Shooting
 	if p.Status == idle && p.Cooldown.Shooting == 0 && ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		p.Active.Shooting = ShootingTicks
 		p.Cooldown.Shooting = ShootingCD
 		p.Status = shooting
-		// TODO: swap hands
-		if p.ActiveHand == p.RightHand {
-			p.RightHand.Anim = hand.AnimationShootFinger.NewInstance(p.RightHand, false)
-			p.ActiveHand = p.LeftHand
-		} else {
-			p.LeftHand.Anim = hand.AnimationShootFinger.NewInstance(p.LeftHand, false)
-			p.ActiveHand = p.RightHand
+		// Swap hand if necessary
+		for _, h := range hands {
+			h.Anim = h.ShootAnimation().NewInstance(h, false)
+			if h == p.RightHand {
+				p.ActiveHand = p.LeftHand
+			} else {
+				p.ActiveHand = p.RightHand
+			}
 		}
 	}
 	// Dashing
@@ -117,24 +119,29 @@ func (p *Player) Update(ctx *entity.Context) {
 	p.Cooldown.Update()
 	p.resetModifiers()
 	// Ending status
-	switch {
-	case p.Status == shooting && p.Active.Shooting == 0:
-		off := ctx.PlayerDirection.Mul(0.5 * graphics.SpriteScale)
-		off = off.Add(ctx.CameraRight.Mul(0.75 * p.ActiveHand.ShotRightCoeff()))
-		off = off.Sub(ctx.CameraUp.Mul(0.5))
-
-		ctx.Entities = append(ctx.Entities, entity.NewProjectile(
-			ctx.PlayerPosition.Add(off),
-			ctx.PlayerDirection,
-			0.1,
-			p.ProjectileSpeedMod,
-			color.RGBA{0, 0, 255, 255},
-			color.White,
-		))
-		if p.ActiveHand == p.RightHand {
-			p.LeftHand.Anim = nil
-		} else {
-			p.RightHand.Anim = nil
+	for _, h := range hands {
+		switch {
+		case p.Status == shooting && p.Active.Shooting == 0:
+			off := ctx.PlayerDirection.Mul(0.5 * graphics.SpriteScale)
+			off = off.Add(ctx.CameraRight.Mul(0.75 * h.ShotRightCoeff()))
+			off = off.Sub(ctx.CameraUp.Mul(0.5))
+			// Shoot a projectile
+			ctx.Entities = append(ctx.Entities, entity.NewProjectile(
+				ctx.PlayerPosition.Add(off),
+				ctx.PlayerDirection,
+				0.1,
+				p.Stats.Hand(h.Side).ProjectileSpeed,
+				color.RGBA{0, 0, 255, 255},
+				color.White,
+			))
+			// If not hand-synced, terminate the other hand's animation
+			if !p.Stats.Synced {
+				if h == p.RightHand {
+					p.LeftHand.Anim = nil
+				} else {
+					p.RightHand.Anim = nil
+				}
+			}
 		}
 	}
 	// New states

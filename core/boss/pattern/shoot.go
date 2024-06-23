@@ -39,7 +39,7 @@ func (s *Shoot) Update(ctx *entity.Context) {
 			},
 			s.delay, 0,
 		))
-		ctx.Boss.SetStance(entity.StanceIdle)
+		ctx.Boss.SetStance(entity.StanceHostile)
 	}
 	if s.ticks >= s.delay {
 		dir := ctx.PlayerPosition.Sub(ctx.Boss.Position()).Normalize()
@@ -47,11 +47,10 @@ func (s *Shoot) Update(ctx *entity.Context) {
 			ctx.Boss.Position().Add(dir.Mul(2.5)),
 			dir,
 			1, s.speed,
-			color.RGBA{220,0,0,255},
-			color.RGBA{255,192,192,255},
+			color.RGBA{220, 0, 0, 255},
+			color.RGBA{255, 192, 192, 255},
 		)
 		ctx.Entities = append(ctx.Entities, p)
-		ctx.Boss.SetStance(entity.StanceHostile)
 		s.over = true
 	}
 	s.ticks++

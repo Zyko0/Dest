@@ -23,7 +23,8 @@ type SmokeMask struct {
 	smokes  []mgl64.Vec4
 	maskDir mgl64.Vec3
 
-	seq *Sequence
+	seq        *Sequence
+	phase2init bool
 
 	Health    float64
 	MaxHealth float64
@@ -75,16 +76,33 @@ func (sm *SmokeMask) phase() int {
 }
 
 func (sm *SmokeMask) Update(ctx *entity.Context) {
+	if !sm.phase2init && sm.phase() == 1 {
+		sm.seq = newSequence(
+			NewMoveToEdge(),
+			NewRandomWalk(),
+			NewShoot(), NewShoot(), NewShoot(), NewShoot(), NewShoot(),
+			NewRandomWalk(),
+			NewMultiPattern(
+				NewComet(), NewComet(), NewComet(),
+				NewComet(), NewComet(), NewComet(),
+			),
+			NewRandomWalk(), NewRandomWalk(), NewRandomWalk(),
+		)
+		sm.phase2init = true
+	}
 	if sm.seq == nil {
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
 			sm.seq = newSequence(
-				NewMoveToEdge(),
-				NewMoveToEdge(),
-				NewMoveToEdge(),
-				NewShoot(),
-				NewShoot(),
-				NewShoot(),
+				NewMoveToEdge(), NewMoveToEdge(), NewMoveToEdge(),
+				NewRandomWalk(),
+				NewShoot(), NewRandomWalk(),
+				NewShoot(), NewRandomWalk(),
+				NewShoot(), NewRandomWalk(),
+				NewRandomWalk(),
+				NewComet(), NewComet(), NewComet(),
+				NewRandomWalk(), NewRandomWalk(),
 			)
+
 		}
 	}
 	if sm.seq != nil {
