@@ -9,9 +9,10 @@ const (
 )
 
 const (
-	Sprite = 0.5
-	Bullet = 1.5
-	Impact = 2.5
+	SpriteBoss = 0.5
+	SpriteItem = 1.5
+	Bullet     = 2.5
+	Impact     = 3.5
 	// TODO: volume
 )
 
@@ -41,7 +42,7 @@ func rotate(a float) mat2 {
 }
 
 func Fragment(dst vec4, src vec2, color vec4) vec4 {
-	if color.r < Sprite {
+	if color.r < SpriteBoss {
 		angle, data := unpackAngleOrigin(color.b)
 		origin := data.xy * Unit
 		size := data.zw * Unit
@@ -50,6 +51,11 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 		uv = rotate(angle*TwoPi)*(uv-off) + off
 		uv = clamp(uv, origin, origin+size)
 		clr := imageSrc0UnsafeAt(uv + imageSrc0Origin())
+		return clr * color.a
+	}
+	if color.r < SpriteItem {
+		uv := (src-imageSrc0Origin())/color.g + imageSrc0Origin()
+		clr := imageSrc0UnsafeAt(uv)
 		return clr * color.a
 	}
 	uv := src - imageSrc0Origin()

@@ -62,7 +62,7 @@ func NewSmokeMask(position mgl64.Vec3) *SmokeMask {
 			rand.Float64() - 0.5,
 			rand.Float64() - 0.5,
 		}.Normalize(),
-
+		// TODO: hp
 		Health:    0,
 		MaxHealth: 0,
 	}
@@ -73,6 +73,10 @@ func (sm *SmokeMask) phase() int {
 		return 1
 	}
 	return 0
+}
+
+func (sm *SmokeMask) Team() entity.Team {
+	return entity.TeamEnemy
 }
 
 func (sm *SmokeMask) Update(ctx *entity.Context) {

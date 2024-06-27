@@ -29,6 +29,10 @@ func NewImpact(pos, dir mgl64.Vec3, radius, speed float64) *Impact {
 	}
 }
 
+func (i *Impact) Team() Team {
+	return TeamAlly
+}
+
 func (i *Impact) Update(_ *Context) {
 	i.pos = i.pos.Add(i.dir.Mul(i.speed)) // TODO:
 	i.ticks++
@@ -50,7 +54,7 @@ func (i *Impact) AppendVerticesIndices(vx []ebiten.Vertex, ix []uint16, index *i
 	)
 	*index++
 	for i := 0; i < 4; i++ {
-		vx[vi+i].ColorR = 1 // Bullet hardcoded
+		vx[vi+i].ColorR = 3 // Impact hardcoded
 	}
 
 	return vx, ix

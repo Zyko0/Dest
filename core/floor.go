@@ -42,7 +42,7 @@ func (f *Floor) Update() {
 	f.markers = f.markers[:n]
 }
 
-func (f *Floor) Draw(bossMarker aoe.Shape) {
+func (f *Floor) Draw(extraShape aoe.Shape) {
 	// Reset floor texture
 	f.Image.Clear()
 	// Draw markers
@@ -52,7 +52,9 @@ func (f *Floor) Draw(bossMarker aoe.Shape) {
 	for _, m := range f.markers {
 		vx, ix = m.AppendVerticesIndices(vx, ix, &index, markerResolutionFactor)
 	}
-	vx, ix = bossMarker.AppendVerticesIndices(vx, ix, &index, markerResolutionFactor, 1)
+	if extraShape != nil {
+		vx, ix = extraShape.AppendVerticesIndices(vx, ix, &index, markerResolutionFactor, 1)
+	}
 	f.Image.DrawTrianglesShader(vx, ix, assets.ShaderMarker(), &ebiten.DrawTrianglesShaderOptions{
 		Blend: ebiten.Blend{
 			BlendFactorSourceRGB:        ebiten.BlendFactorSourceColor,

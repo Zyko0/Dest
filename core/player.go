@@ -45,7 +45,7 @@ const (
 
 type Player struct {
 	Status     status
-	Stats      *building.Statistics
+	Core       *building.Core
 	ActiveHand *hand.Hand
 	RightHand  *hand.Hand
 	LeftHand   *hand.Hand
@@ -60,7 +60,7 @@ type Player struct {
 func newPlayer() *Player {
 	p := &Player{
 		Status:    idle,
-		Stats:     building.NewStatistics(),
+		Core:      building.NewCore(),
 		RightHand: hand.New(hand.Right),
 		LeftHand:  hand.New(hand.Left),
 		Active:    &state{},
@@ -79,7 +79,7 @@ func (p *Player) resetModifiers() {
 
 func (p *Player) Update(ctx *entity.Context) {
 	var hands []*hand.Hand
-	if p.Stats.Synced {
+	if p.Core.Synced {
 		hands = []*hand.Hand{p.RightHand, p.LeftHand}
 	} else {
 		hands = []*hand.Hand{p.ActiveHand}
@@ -130,12 +130,13 @@ func (p *Player) Update(ctx *entity.Context) {
 				ctx.PlayerPosition.Add(off),
 				ctx.PlayerDirection,
 				0.1,
-				p.Stats.Hand(h.Side).ProjectileSpeed,
+				p.Core.Hand(h.Side).ProjectileSpeed,
+				entity.TeamAlly,
 				color.RGBA{0, 0, 255, 255},
 				color.White,
 			))
 			// If not hand-synced, terminate the other hand's animation
-			if !p.Stats.Synced {
+			if !p.Core.Synced {
 				if h == p.RightHand {
 					p.LeftHand.Anim = nil
 				} else {

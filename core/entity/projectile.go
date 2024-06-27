@@ -12,6 +12,7 @@ import (
 const ProjectileMaxDuration = 5 * 60
 
 type Projectile struct {
+	team   Team
 	pos    mgl64.Vec3
 	dir    mgl64.Vec3
 	clr0   float32
@@ -23,7 +24,7 @@ type Projectile struct {
 	dead  bool
 }
 
-func NewProjectile(pos, dir mgl64.Vec3, radius, speed float64, clr0, clr1 color.Color) *Projectile {
+func NewProjectile(pos, dir mgl64.Vec3, radius, speed float64, team Team, clr0, clr1 color.Color) *Projectile {
 	return &Projectile{
 		pos:    pos,
 		dir:    dir,
@@ -32,6 +33,10 @@ func NewProjectile(pos, dir mgl64.Vec3, radius, speed float64, clr0, clr1 color.
 		radius: radius,
 		speed:  speed,
 	}
+}
+
+func (p *Projectile) Team() Team {
+	return p.team
 }
 
 func (p *Projectile) Update(_ *Context) {
@@ -55,7 +60,7 @@ func (p *Projectile) AppendVerticesIndices(vx []ebiten.Vertex, ix []uint16, inde
 	)
 	*index++
 	for i := 0; i < 4; i++ {
-		vx[vi+i].ColorR = 1 // Bullet hardcoded
+		vx[vi+i].ColorR = 2 // Bullet hardcoded
 		vx[vi+i].ColorG = p.clr0
 		vx[vi+i].ColorB = p.clr1
 	}

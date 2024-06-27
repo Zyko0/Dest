@@ -47,6 +47,7 @@ func (s *Shoot) Update(ctx *entity.Context) {
 			ctx.Boss.Position().Add(dir.Mul(2.5)),
 			dir,
 			1, s.speed,
+			entity.TeamEnemy,
 			color.RGBA{220, 0, 0, 255},
 			color.RGBA{255, 192, 192, 255},
 		)

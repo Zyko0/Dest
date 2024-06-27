@@ -29,6 +29,10 @@ func NewComet(pos mgl64.Vec3, radius, speed float64) *Comet {
 	}
 }
 
+func (c *Comet) Team() Team {
+	return TeamEnemy
+}
+
 func (c *Comet) Update(_ *Context) {
 	c.position = c.position.Add(mgl64.Vec3{0, -1, 0}.Mul(c.speed)) // TODO:
 	c.ticks++
@@ -67,7 +71,7 @@ func (c *Comet) AppendVerticesIndices(vx []ebiten.Vertex, ix []uint16, index *in
 	for vi < len(vx) {
 		const smokeAlpha = 0.15
 		t := math.Abs(float64((c.ticks+uint(vi/4*5))%45)/45*2-1) * 0.05
-		vx[vi].ColorR = 0                                                          // Sprite hardcoded
+		vx[vi].ColorR = 0                                                          // Sprite boss hardcoded
 		vx[vi].ColorB = graphics.AngleOriginAsFloat32(t, assets.MaskCometSmokeSrc) // Angle
 		vx[vi].ColorA = smokeAlpha
 		vi++
@@ -85,7 +89,7 @@ func (c *Comet) AppendVerticesIndices(vx []ebiten.Vertex, ix []uint16, index *in
 	*index++
 	for i := 0; i < 4; i++ {
 		t := math.Abs(c.angle + float64(c.ticks%30)/30)
-		vx[vi+i].ColorR = 0                                                         // Sprite hardcoded
+		vx[vi+i].ColorR = 0                                                         // Sprite boss hardcoded
 		vx[vi+i].ColorB = graphics.AngleOriginAsFloat32(t, assets.MaskCometBallSrc) // Angle
 		vx[vi+i].ColorA = 1                                                         // Comet alpha
 	}

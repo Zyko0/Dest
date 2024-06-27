@@ -18,6 +18,10 @@ var (
 	//go:embed images
 	fsys embed.FS
 
+	// Item sprites
+	ItemSheetImage *ebiten.Image // TODO: load
+
+	// Mask Boss
 	MaskSheetImage    *ebiten.Image
 	MaskSmokeSrc      = image.Rect(0, 0, 512, 512)
 	MaskIdle0Src      = image.Rect(512, 0, 768, 256)
@@ -36,10 +40,19 @@ func init() {
 
 	// Sprites
 
+	// Mask Boss
+
 	b, _ := fsys.ReadFile("images/mask_sheet.png")
 	img, err := png.Decode(bytes.NewReader(b))
 	if err != nil {
 		log.Fatal("err: ", err)
 	}
 	MaskSheetImage = ebiten.NewImageFromImage(img)
+
+	b, _ = fsys.ReadFile("images/item_sheet.png")
+	img, err = png.Decode(bytes.NewReader(b))
+	if err != nil {
+		log.Fatal("err: ", err)
+	}
+	ItemSheetImage = ebiten.NewImageFromImage(img)
 }

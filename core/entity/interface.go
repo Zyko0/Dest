@@ -7,10 +7,19 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+type Team byte
+
+const (
+	TeamAlly Team = iota
+	TeamEnemy
+	TeamNone
+)
+
 type Entity interface {
 	Update(ctx *Context)
 	AppendVerticesIndices(vx []ebiten.Vertex, ix []uint16, index *int, ctx *graphics.Context) ([]ebiten.Vertex, []uint16)
 
+	Team() Team
 	Position() mgl64.Vec3
 	Radius() float64
 	Dead() bool

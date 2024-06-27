@@ -10,6 +10,7 @@ import (
 	"github.com/Zyko0/Alapae/assets"
 	"github.com/Zyko0/Alapae/core/aoe"
 	"github.com/Zyko0/Alapae/core/boss"
+	"github.com/Zyko0/Alapae/core/building"
 	"github.com/Zyko0/Alapae/core/entity"
 	"github.com/Zyko0/Alapae/graphics"
 	"github.com/Zyko0/Alapae/input"
@@ -29,34 +30,29 @@ type Game struct {
 	seed  float32
 	floor *Floor
 
+	stage    int
 	camera   *Camera
 	player   *Player
+	building *building.Phase
 	boss     entity.Boss
 	entities []entity.Entity
-
-	bulletOffscreen *ebiten.Image
 }
 
 func NewGame(camera *Camera, resolution image.Rectangle) *Game {
-	b := boss.NewSmokeMask(mgl64.Vec3{
-		192 / 2,
-		graphics.SpriteScale,
-		192,
-	})
+	p := newPlayer()
+
 	return &Game{
 		seed:  rand.Float32(),
 		floor: newFloor(),
 
-		camera:          camera,
-		player:          newPlayer(),
-		boss:            b,
-		entities:        []entity.Entity{b},
-		bulletOffscreen: ebiten.NewImage(resolution.Dx(), resolution.Dy()),
+		camera:   camera,
+		player:   p,
+		building: building.NewPhase(p.Core),
+		entities: []entity.Entity{},
 	}
 }
 
 var (
-	Grounded   bool
 	PlayerSize = mgl64.Vec3{1, 2, 1}
 )
 
@@ -82,14 +78,49 @@ func (g *Game) processInput() {
 	)
 	pos[0] = max(min(pos[0], ArenaSize-PlayerSize.X()/2), 0)
 	pos[2] = max(min(pos[2], ArenaSize-PlayerSize.Z()/2), 0)
-	if pos[1] < 1+PlayerSize.Y()/2 {
-		pos[1] = 1 + PlayerSize.Y()/2
-		Grounded = true
-	}
 	g.camera.SetPosition(pos)
 }
 
+type Stage byte
+
+const (
+	Building Stage = iota
+	BossFight
+)
+
+func (g *Game) Stage() Stage {
+	if g.stage%2 == 0 {
+		return Building
+	}
+	return BossFight
+}
+
+func (g *Game) InitStage() {
+	if g.Stage() == Building {
+		g.building.RollNew()
+		g.entities = g.building.AppendEntities(g.entities)
+		return
+	}
+	b := boss.NewSmokeMask(mgl64.Vec3{
+		192 / 2,
+		graphics.SpriteScale,
+		192,
+	})
+	g.boss = b
+	g.entities = append(g.entities, b)
+}
+
+func (g *Game) StageSheetImage() *ebiten.Image {
+	if g.Stage() == Building {
+		return assets.ItemSheetImage
+	}
+	return g.boss.Image()
+}
+
 func (g *Game) Update() {
+	if inpututil.IsKeyJustReleased(ebiten.KeyEnter) {
+		g.InitStage()
+	}
 	// TODO: Debug
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		g.floor.AddMarker(aoe.NewMarker(
@@ -146,6 +177,11 @@ func (g *Game) Update() {
 	g.player.Update(ctx)
 	g.entities = append(g.entities, ctx.Entities...)
 
+	// Building phase
+	if g.Stage() == Building {
+		g.building.Update(ctx)
+	}
+
 	// TODO: collisions
 	// Update/add floor AoE markers
 	for _, m := range ctx.Markers {
@@ -170,7 +206,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var vx []ebiten.Vertex
 	var ix []uint16
 	// Refresh AoE markers on the floor
-	g.floor.Draw(g.boss.MarkerShape())
+	var shape aoe.Shape
+	if g.boss != nil {
+		shape = g.boss.MarkerShape()
+	} else {
+		shape = g.building.MarkerShape()
+	}
+	g.floor.Draw(shape)
 	// Draw arena scene
 	vx, ix = graphics.AppendRectVerticesIndices(
 		vx[:0], ix[:0], 0, &graphics.RectOpts{
@@ -206,7 +248,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	graphics.ScreenVertices(vx, screen.Bounds().Dx(), screen.Bounds().Dy())
 	screen.DrawTrianglesShader(vx, ix, assets.ShaderEntity(), &ebiten.DrawTrianglesShaderOptions{
 		Images: [4]*ebiten.Image{
-			g.boss.Image(),
+			g.StageSheetImage(),
 		},
 	})
 
