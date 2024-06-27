@@ -26,8 +26,8 @@ type SmokeMask struct {
 	seq        *Sequence
 	phase2init bool
 
-	Health    float64
-	MaxHealth float64
+	health    float64
+	maxHealth float64
 }
 
 func NewSmokeMask(position mgl64.Vec3) *SmokeMask {
@@ -63,16 +63,24 @@ func NewSmokeMask(position mgl64.Vec3) *SmokeMask {
 			rand.Float64() - 0.5,
 		}.Normalize(),
 		// TODO: hp
-		Health:    0,
-		MaxHealth: 0,
+		health:    0,
+		maxHealth: 0,
 	}
 }
 
 func (sm *SmokeMask) phase() int {
-	if sm.Health <= sm.MaxHealth/2 {
+	if sm.health <= sm.maxHealth/2 {
 		return 1
 	}
 	return 0
+}
+
+func (sm *SmokeMask) Health() float64 {
+	return sm.health
+}
+
+func (sm *SmokeMask) MaxHealth() float64 {
+	return sm.maxHealth
 }
 
 func (sm *SmokeMask) Team() entity.Team {

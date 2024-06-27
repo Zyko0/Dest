@@ -174,8 +174,8 @@ func Fragment(dst vec4, src vec2, color vec4) vec4 {
 	var clr vec3
 	if d > MaxDepth {
 		// Glow
-		d = 1 - max(sdHand(ro+rd*4), 0)
-		return vec4(vec3(1, 0.25, 0), 1) * (d * color.r)
+		d = 1 - max(sdHand(ro+rd*4.5), 0)
+		return vec4(vec3(1, 0, 0), 1) * (d * color.r)
 	} else {
 		p := ro + rd*d
 		// Light stuff

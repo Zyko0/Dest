@@ -16,7 +16,7 @@ var (
 	CursorImage *ebiten.Image
 
 	//go:embed images
-	fsys embed.FS
+	fsImg embed.FS
 
 	// Item sprites
 	ItemSheetImage *ebiten.Image // TODO: load
@@ -42,14 +42,14 @@ func init() {
 
 	// Mask Boss
 
-	b, _ := fsys.ReadFile("images/mask_sheet.png")
+	b, _ := fsImg.ReadFile("images/mask_sheet.png")
 	img, err := png.Decode(bytes.NewReader(b))
 	if err != nil {
 		log.Fatal("err: ", err)
 	}
 	MaskSheetImage = ebiten.NewImageFromImage(img)
 
-	b, _ = fsys.ReadFile("images/item_sheet.png")
+	b, _ = fsImg.ReadFile("images/item_sheet.png")
 	img, err = png.Decode(bytes.NewReader(b))
 	if err != nil {
 		log.Fatal("err: ", err)

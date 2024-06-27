@@ -35,6 +35,9 @@ const (
 type Boss interface {
 	Entity
 
+	Health() float64
+	MaxHealth() float64
+
 	SetPosition(pos mgl64.Vec3)
 	SetStance(stance Stance)
 

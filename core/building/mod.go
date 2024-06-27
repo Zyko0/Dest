@@ -16,19 +16,25 @@ type Mod struct {
 func (m *Mod) Init(c *Core, hm *HandModifiers, p *Phase) {
 	switch m.def.ID {
 	case Prayer:
-		i := rand.Intn(len(hm.Curses))
-		hm.Curses = slices.Delete(hm.Curses, i, i+1)
+		if len(hm.Curses) > 0 {
+			i := rand.Intn(len(hm.Curses))
+			hm.Curses = slices.Delete(hm.Curses, i, i+1)
+		}
 		c.Health = max(min(c.Health+c.MaxHealth*0.2, c.MaxHealth), 1)
 	case Highroll:
-		p.RollExisting()
+		p.RollExisting(p.Objects, false)
 	case Striker, Gambler:
 		m.Stacks = c.AttackSpeedStacks
 		c.AttackSpeedStacks = 0
 	case Dual_Prayer:
-		r := rand.Intn(len(c.right.Curses))
-		l := rand.Intn(len(c.left.Curses))
-		c.right.Curses = slices.Delete(c.right.Curses, r, r+1)
-		c.left.Curses = slices.Delete(c.left.Curses, l, l+1)
+		if len(c.right.Curses) > 0 {
+			r := rand.Intn(len(c.right.Curses))
+			c.right.Curses = slices.Delete(c.right.Curses, r, r+1)
+		}
+		if len(c.left.Curses) > 0 {
+			l := rand.Intn(len(c.left.Curses))
+			c.left.Curses = slices.Delete(c.left.Curses, l, l+1)
+		}
 		c.Health = max(min(c.Health+c.MaxHealth*0.2, c.MaxHealth), 1)
 	case Change_of_mind:
 		c.right.Bonuses, c.left.Bonuses = c.left.Bonuses, c.right.Bonuses
@@ -52,13 +58,17 @@ func (m *Mod) Init(c *Core, hm *HandModifiers, p *Phase) {
 				Stacks: m.Stacks,
 			})
 		}
+	case Trap:
+		c.Health = max(c.Health-max(c.MaxHealth*0.1, 1), 0)
 	case Lowroll:
-		p.RollExisting()
+		p.RollExisting(p.Objects, false)
 	case Sabotage:
-		p.RollExtraCurses(5)
+		p.RollExtraCurses(10)
 	case Procrastination:
 		p.RegisterExtraCurse()
 	}
+	// One apply
+	m.Apply(c, hm)
 }
 
 func (m *Mod) Apply(c *Core, hm *HandModifiers) {
@@ -79,7 +89,7 @@ func (m *Mod) Apply(c *Core, hm *HandModifiers) {
 		c.right.Damage += 2.5 * float64(m.Stacks)
 		c.left.Damage += 2.5 * float64(m.Stacks)
 	case Attack_speed_up:
-		c.AttackSpeedStacks++
+		c.AttackSpeedStacks = min(c.AttackSpeedStacks+1, 6)
 	case Striker:
 		hm.Damage += float64(5 * m.Stacks)
 	case Gambler:
@@ -144,7 +154,6 @@ func (m *Mod) Apply(c *Core, hm *HandModifiers) {
 	case Heavy:
 		hm.ProjectileSpeed -= 0.25
 	case Trap:
-		c.Health = max(c.Health-min(c.MaxHealth*0.1, 1), 0)
 	case Lowroll:
 	case Sabotage:
 	case Delicate:

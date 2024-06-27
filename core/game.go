@@ -29,12 +29,13 @@ const (
 type Game struct {
 	seed  float32
 	floor *Floor
+	stage int
 
-	stage    int
+	Player   *Player
+	Building *building.Phase
+	Boss     entity.Boss
+
 	camera   *Camera
-	player   *Player
-	building *building.Phase
-	boss     entity.Boss
 	entities []entity.Entity
 }
 
@@ -46,8 +47,8 @@ func NewGame(camera *Camera, resolution image.Rectangle) *Game {
 		floor: newFloor(),
 
 		camera:   camera,
-		player:   p,
-		building: building.NewPhase(p.Core),
+		Player:   p,
+		Building: building.NewPhase(p.Core),
 		entities: []entity.Entity{},
 	}
 }
@@ -74,7 +75,7 @@ func (g *Game) processInput() {
 		g.camera.Position(),
 		g.camera.Direction(),
 		g.camera.Right(),
-		PlayerMovementSpeed*g.player.SpeedMod,
+		PlayerMovementSpeed*g.Player.SpeedMod,
 	)
 	pos[0] = max(min(pos[0], ArenaSize-PlayerSize.X()/2), 0)
 	pos[2] = max(min(pos[2], ArenaSize-PlayerSize.Z()/2), 0)
@@ -88,6 +89,10 @@ const (
 	BossFight
 )
 
+func (g *Game) StageNumber() int {
+	return g.stage
+}
+
 func (g *Game) Stage() Stage {
 	if g.stage%2 == 0 {
 		return Building
@@ -97,8 +102,8 @@ func (g *Game) Stage() Stage {
 
 func (g *Game) InitStage() {
 	if g.Stage() == Building {
-		g.building.RollNew()
-		g.entities = g.building.AppendEntities(g.entities)
+		g.Building.RollNew()
+		g.entities = g.Building.AppendEntities(g.entities)
 		return
 	}
 	b := boss.NewSmokeMask(mgl64.Vec3{
@@ -106,7 +111,7 @@ func (g *Game) InitStage() {
 		graphics.SpriteScale,
 		192,
 	})
-	g.boss = b
+	g.Boss = b
 	g.entities = append(g.entities, b)
 }
 
@@ -114,7 +119,7 @@ func (g *Game) StageSheetImage() *ebiten.Image {
 	if g.Stage() == Building {
 		return assets.ItemSheetImage
 	}
-	return g.boss.Image()
+	return g.Boss.Image()
 }
 
 func (g *Game) Update() {
@@ -160,7 +165,7 @@ func (g *Game) Update() {
 		CameraUp:        g.camera.up,
 		PlayerPosition:  g.camera.position,
 		PlayerDirection: g.camera.direction,
-		Boss:            g.boss,
+		Boss:            g.Boss,
 	}
 	// Entities update
 	var n int
@@ -174,12 +179,30 @@ func (g *Game) Update() {
 	}
 	g.entities = g.entities[:n]
 	// Player update
-	g.player.Update(ctx)
+	g.Player.Update(ctx)
 	g.entities = append(g.entities, ctx.Entities...)
 
 	// Building phase
+	g.Player.LeftHand.Glow, g.Player.RightHand.Glow = 0, 0
 	if g.Stage() == Building {
-		g.building.Update(ctx)
+		g.Building.Update(ctx)
+		// Hand glowing
+		if g.Building.Target != nil {
+			switch g.Building.Target.Item.HandSide {
+			case building.BothHand:
+				g.Player.LeftHand.Glow, g.Player.RightHand.Glow = 1, 1
+			case building.RightHand:
+				g.Player.RightHand.Glow = 1
+			case building.LeftHand:
+				g.Player.LeftHand.Glow = 1
+			}
+			// Item picking
+			if inpututil.IsKeyJustPressed(ebiten.KeyE) {
+				item := g.Building.Target.Item
+				g.Building.Pick()
+				item.RegisterMod(g.Player.Core, g.Building)
+			}
+		}
 	}
 
 	// TODO: collisions
@@ -207,10 +230,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var ix []uint16
 	// Refresh AoE markers on the floor
 	var shape aoe.Shape
-	if g.boss != nil {
-		shape = g.boss.MarkerShape()
+	if g.Boss != nil {
+		shape = g.Boss.MarkerShape()
 	} else {
-		shape = g.building.MarkerShape()
+		shape = g.Building.MarkerShape()
 	}
 	g.floor.Draw(shape)
 	// Draw arena scene
@@ -253,7 +276,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	})
 
 	// Player hands
-	g.player.DrawHands(screen, ctx)
+	g.Player.DrawHands(screen, ctx)
 	// TODO: this is debug
 	screen.DrawImage(g.floor.Image, nil)
 	// Crosshair

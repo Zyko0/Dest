@@ -18,7 +18,6 @@ const (
 
 type Hand struct {
 	Side     Side
-	Weapon   Weapon
 	Anim     *AnimationInstance
 	Glow     float32
 	Rotation mgl64.Vec3
@@ -39,8 +38,8 @@ func New(side Side) *Hand {
 	}
 }
 
-func (h *Hand) ShootAnimation() *Animation {
-	if h.Weapon == WeaponFinger {
+func (h *Hand) ShootAnimation(w Weapon) *Animation {
+	if w == WeaponFinger {
 		return AnimationShootFinger
 	}
 	return AnimationShootPistol

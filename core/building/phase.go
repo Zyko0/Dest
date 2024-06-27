@@ -22,7 +22,7 @@ type Phase struct {
 	core *Core
 
 	Target          *ItemObject
-	NextExtraCurses []*Curse
+	NextExtraCurses []*Item
 	Objects         []*ItemObject
 }
 
@@ -46,7 +46,7 @@ func (p *Phase) MarkerShape() aoe.Shape {
 
 func (p *Phase) Update(ctx *entity.Context) {
 	const (
-		targetRange = 10 * 10 * 10 * 10
+		targetRange = 32 * 32
 	)
 	var bestDistSq = 99999.
 
@@ -96,15 +96,16 @@ var (
 	}
 )
 
-func (p *Phase) RollExisting() {
+func (p *Phase) RollExisting(objects []*ItemObject, curse bool) {
 	allowed := p.possibleItems()
 
-	byRarity := [5][]int{}
+	byRarity := [6][]int{}
 	byRarity[Common] = append(byRarity[Common], commons...)
 	byRarity[Uncommon] = append(byRarity[Uncommon], uncommons...)
 	byRarity[Rare] = append(byRarity[Rare], rares...)
 	byRarity[Epic] = append(byRarity[Epic], epics...)
 	byRarity[Legendary] = append(byRarity[Legendary], legendaries...)
+	byRarity[Cursed] = append(byRarity[Cursed], curses...)
 	for i, items := range byRarity {
 		n := 0
 		for _, id := range items {
@@ -116,10 +117,12 @@ func (p *Phase) RollExisting() {
 		byRarity[i] = items[:n]
 	}
 	var items []int
-	for i := 0; i < len(p.Objects); i++ {
+	for i := 0; i < len(objects); i++ {
 		roll := rand.Float64() * (1 - p.core.Luck)
 		rarity := Common
 		switch {
+		case curse:
+			rarity = Cursed
 		case roll < itemChances[Legendary]:
 			rarity = Legendary
 		case roll < itemChances[Epic]:
@@ -157,38 +160,80 @@ func (p *Phase) RollExisting() {
 		if allowed[id][0] == 0 && allowed[id][1] == 0 {
 			byRarity[rarity] = slices.Delete(items, index, index+1)
 		}
-		p.Objects[i].Item.def = def
-		p.Objects[i].Item.HandSide = hs
+		if curse {
+			objects[i].Item.Curses = append(objects[i].Item.Curses, &Item{
+				def:      def,
+				HandSide: hs,
+			})
+		} else {
+			objects[i].Item.def = def
+			objects[i].Item.HandSide = hs
+		}
 	}
 }
 
 func (p *Phase) RollNew() {
 	const (
-		CellSize   = float64(logic.ArenaSize) / (ItemsPerLine)
+		CellSize   = float64(logic.ArenaSize) / ItemsPerLine
 		ItemRadius = 0.25
 		ItemHeight = -graphics.SpriteScale + ItemRadius*graphics.SpriteScale
 	)
 
 	p.Objects = make([]*ItemObject, PhaseItems)
-	for i := range p.Objects {
-		p.Objects[i] = &ItemObject{
-			pos: mgl64.Vec3{
-				float64((i%(ItemsPerLine)))*CellSize + ItemRadius*graphics.SpriteScale,
-				ItemHeight,
-				float64((i/(ItemsPerLine*2)))*CellSize + ItemRadius*graphics.SpriteScale,
-			},
-			radius: ItemRadius,
-			Item:   &Item{},
+	i := 0
+	for z := 0; z < Lines; z++ {
+		for x := 0; x < ItemsPerLine; x++ {
+			var offx, offz float64
+			if z%2 == 1 {
+				offx = (CellSize / 2)
+			}
+			ox := float64(x)*CellSize + 2*ItemRadius*graphics.SpriteScale + offx
+			oz := float64(z)*(CellSize/2) + 2*ItemRadius*graphics.SpriteScale + offz
+			p.Objects[i] = &ItemObject{
+				pos: mgl64.Vec3{
+					ox, ItemHeight, oz,
+				},
+				radius: ItemRadius,
+				Item:   &Item{},
+			}
+			i++
 		}
 	}
-	p.RollExisting()
+	p.RollExisting(p.Objects, false)
 }
 
 func (p *Phase) RollExtraCurses(n int) {
+	items := make([]*ItemObject, n)
+	for i := 0; i < n; i++ {
+		items[i] = p.Objects[rand.Intn(len(p.Objects))]
+	}
+	p.RollExisting(items, true)
+}
 
+func (p *Phase) Pick() {
+	if p.Target != nil {
+		if index := slices.Index(p.Objects, p.Target); index != -1 {
+			p.Target.picked = true
+			p.Objects = slices.Delete(p.Objects, index, index+1)
+			// Delete 3 item objects
+			for i := 0; i < 3; i++ {
+				index := rand.Intn(len(p.Objects))
+				p.Objects[index].picked = true
+				p.Objects = slices.Delete(p.Objects, index, index+1)
+			}
+			// Curse 7 items objects
+			p.RollExtraCurses(7)
+		}
+		if len(p.NextExtraCurses) > 0 {
+			p.Target.Item.Curses = append(p.Target.Item.Curses, p.NextExtraCurses...)
+			p.NextExtraCurses = p.NextExtraCurses[:0]
+		}
+		p.Target = nil
+	}
 }
 
 func (p *Phase) RegisterExtraCurse() {
-	//p.ExtraCurses = append(p.ExtraCurses, )
-	// TODO:
+	obj := []*ItemObject{{Item: &Item{}}}
+	p.RollExisting(obj, true)
+	p.NextExtraCurses = append(p.NextExtraCurses, obj[0].Item.Curses[0])
 }

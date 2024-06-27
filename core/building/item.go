@@ -63,7 +63,11 @@ type Item struct {
 
 	HandSide HandSide
 
-	Curses []*Curse
+	Curses []*Item
+}
+
+func (i *Item) SourceRect() image.Rectangle {
+	return i.def.Rect
 }
 
 func (i *Item) Name() string {
@@ -71,6 +75,9 @@ func (i *Item) Name() string {
 }
 
 func (i *Item) Description() string {
+	if i.def.Hand == None {
+		return i.def.Description
+	}
 	return fmt.Sprintf(i.def.Description, i.HandSide.String())
 }
 
@@ -144,6 +151,6 @@ func (i *Item) RegisterMod(c *Core, phase *Phase) {
 	}
 	// Curses
 	for _, ci := range i.Curses {
-		(*Item)(ci).RegisterMod(c, phase)
+		ci.RegisterMod(c, phase)
 	}
 }

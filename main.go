@@ -6,6 +6,7 @@ import (
 
 	"github.com/Zyko0/Alapae/core"
 	"github.com/Zyko0/Alapae/input"
+	"github.com/Zyko0/Alapae/ui"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -24,6 +25,7 @@ var (
 type Game struct {
 	offscreen *ebiten.Image
 	game      *core.Game
+	hud       *ui.HUD
 
 	updated bool
 }
@@ -68,6 +70,23 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	if g.updated {
 		g.game.Draw(g.offscreen)
+		// HUD
+		hudCtx := &ui.HUDContext{
+			Stage:       g.game.StageNumber(),
+			StageKind:   g.game.Stage(),
+			PlayerHP:    g.game.Player.Core.Health,
+			PlayerMaxHP: g.game.Player.Core.MaxHealth,
+		}
+		switch hudCtx.StageKind {
+		case core.Building:
+			if g.game.Building.Target != nil {
+				hudCtx.TargetItem = g.game.Building.Target.Item
+			}
+		case core.BossFight:
+			hudCtx.BossHP = g.game.Boss.Health()
+			hudCtx.BossMaxHP = g.game.Boss.MaxHealth()
+		}
+		g.hud.Draw(g.offscreen, hudCtx)
 		g.updated = false
 	}
 	screen.DrawImage(g.offscreen, nil)

@@ -84,6 +84,7 @@ func (p *Player) Update(ctx *entity.Context) {
 	} else {
 		hands = []*hand.Hand{p.ActiveHand}
 	}
+
 	// Shooting
 	if p.Status == idle && p.Cooldown.Shooting == 0 && ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		p.Active.Shooting = ShootingTicks
@@ -91,7 +92,7 @@ func (p *Player) Update(ctx *entity.Context) {
 		p.Status = shooting
 		// Swap hand if necessary
 		for _, h := range hands {
-			h.Anim = h.ShootAnimation().NewInstance(h, false)
+			h.Anim = h.ShootAnimation(p.Core.Hand(h.Side).Weapon).NewInstance(h, false)
 			if h == p.RightHand {
 				p.ActiveHand = p.LeftHand
 			} else {
@@ -136,13 +137,13 @@ func (p *Player) Update(ctx *entity.Context) {
 				color.White,
 			))
 			// If not hand-synced, terminate the other hand's animation
-			if !p.Core.Synced {
-				if h == p.RightHand {
-					p.LeftHand.Anim = nil
-				} else {
-					p.RightHand.Anim = nil
-				}
+			//if !p.Core.Synced {
+			if h == p.RightHand {
+				p.LeftHand.Anim = nil
+			} else {
+				p.RightHand.Anim = nil
 			}
+			//}
 		}
 	}
 	// New states

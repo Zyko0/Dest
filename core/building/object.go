@@ -21,6 +21,9 @@ func (i *ItemObject) Team() entity.Team {
 }
 
 func (i *ItemObject) Update(ctx *entity.Context) {
+	if i.picked {
+		return
+	}
 	dir := ctx.PlayerPosition.Sub(i.pos).Normalize()
 	dot := dir.Dot(ctx.PlayerDirection)
 	if dot < -0.99 {

@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	BrushImage  = ebiten.NewImage(1, 1)
+	BrushImage  = ebiten.NewImage(3, 3)
 	rectIndices = [6]uint16{0, 1, 2, 1, 2, 3}
 )
 
