@@ -75,9 +75,9 @@ func (h *Hand) AsStep() *HandStep {
 func (h *Hand) ShotRightCoeff() float64 {
 	switch h.Side {
 	case Right:
-		return -1
-	case Left:
 		return 1
+	case Left:
+		return -1
 	default:
 		return 0
 	}

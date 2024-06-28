@@ -5,6 +5,7 @@ import (
 	"image"
 	"log"
 
+	"github.com/Zyko0/Alapae/assets"
 	"github.com/Zyko0/Alapae/core"
 	"github.com/Zyko0/Alapae/input"
 	"github.com/Zyko0/Alapae/ui"
@@ -53,6 +54,7 @@ func (g *Game) Update() error {
 		// TODO: remove
 		return ebiten.Termination
 	}
+
 	// Pause
 	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
 		g.paused = !g.paused
@@ -123,7 +125,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		fmt.Sprintf("TPS: %0.2f - FPS %.02f",
 			ebiten.ActualTPS(),
 			ebiten.ActualFPS(),
-			//g.game camera.Position(), g.camera.Direction(),
 		),
 	)
 }
@@ -139,7 +140,8 @@ func main() {
 	ebiten.SetFullscreen(true)
 	ebiten.SetWindowSize(ScreenWidth, ScreenHeight)
 	ebiten.SetCursorShape(ebiten.CursorShapeCrosshair)
-
+	assets.SetMusic(assets.MusicMenu)
+	assets.PlayMusic()
 	if err := ebiten.RunGameWithOptions(New(), &ebiten.RunGameOptions{
 		GraphicsLibrary: ebiten.GraphicsLibraryOpenGL,
 	}); err != nil {

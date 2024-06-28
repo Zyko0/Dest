@@ -176,7 +176,6 @@ func AngleOriginAsFloat32(angle float64, rect image.Rectangle) float32 {
 	vy := uint32(rect.Min.Y / unit)
 	dx := uint32(rect.Dx() / unit)
 	dy := uint32(rect.Dy() / unit)
-	/*fmt.Println("rect:", rect, "vx", vx, "vy", vy, "dx", dx, "dy", dy)
-	fmt.Printf("%32b\n", (a&255)<<16+(vx<<12+vy<<8)+(dx<<4+dy))*/
+
 	return float32((a&255)<<16 + (vx<<12 + vy<<8) + (dx<<4 + dy))
 }

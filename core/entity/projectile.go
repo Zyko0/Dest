@@ -35,7 +35,7 @@ func NewProjectile(pos, dir mgl64.Vec3, radius, speed, dmg float64, team Team, c
 		alpha:      alpha,
 		radius:     radius,
 		speed:      speed,
-		dmg:        dmg,
+		dmg:        max(dmg, 0),
 		duration:   duration,
 		resistance: resistance,
 	}

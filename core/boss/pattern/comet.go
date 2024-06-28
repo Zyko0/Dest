@@ -1,6 +1,7 @@
 package pattern
 
 import (
+	"github.com/Zyko0/Alapae/assets"
 	"github.com/Zyko0/Alapae/core/aoe"
 	"github.com/Zyko0/Alapae/core/entity"
 	"github.com/Zyko0/Alapae/graphics"
@@ -51,6 +52,7 @@ func (d *Comet) Update(ctx *entity.Context) {
 			d.speed,
 		)
 		ctx.Entities = append(ctx.Entities, p)
+		assets.PlayBossComet()
 		d.over = true
 	}
 	d.ticks++

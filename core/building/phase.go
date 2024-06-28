@@ -89,8 +89,8 @@ func (p *Phase) AppendEntities(entities []entity.Entity) []entity.Entity {
 var (
 	itemChances = [5]float64{
 		Common:    1,
-		Uncommon:  0.9,
-		Rare:      0.5,
+		Uncommon:  0.7,
+		Rare:      0.45,
 		Epic:      0.2,
 		Legendary: 0.05,
 	}
@@ -203,6 +203,9 @@ func (p *Phase) RollNew() {
 }
 
 func (p *Phase) RollExtraCurses(n int) {
+	if len(p.Objects) == 0 {
+		return
+	}
 	items := make([]*ItemObject, n)
 	for i := 0; i < n; i++ {
 		items[i] = p.Objects[rand.Intn(len(p.Objects))]

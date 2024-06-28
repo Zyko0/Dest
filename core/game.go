@@ -116,6 +116,11 @@ func (g *Game) initStage() {
 			logic.ArenaSize - graphics.SpriteScale,
 		})
 		g.camera.SetYawPitch(2.5, 0)
+		// Health recover
+		g.Player.Core.Health = min(
+			g.Player.Core.Health+g.Player.Core.HealthPerStage,
+			g.Player.Core.MaxHealth,
+		)
 		return
 	}
 	b := boss.NewSmokeMask(mgl64.Vec3{
@@ -136,6 +141,7 @@ func (g *Game) initStage() {
 
 func (g *Game) nextStage() {
 	g.stage++
+	g.seed = rand.Float32()
 	g.initStage()
 }
 
@@ -176,7 +182,7 @@ func (g *Game) Update() {
 		))*/
 	}
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		g.nextStage()
+		//g.nextStage()
 	}
 	// End debug
 
@@ -210,7 +216,8 @@ func (g *Game) Update() {
 
 	// Building phase
 	g.Player.LeftHand.Glow, g.Player.RightHand.Glow = 0, 0
-	if g.Stage() == Building {
+	switch g.Stage() {
+	case Building:
 		g.Building.Update(ctx)
 		// Hand glowing
 		if g.Building.Target != nil {
@@ -223,6 +230,11 @@ func (g *Game) Update() {
 				g.Player.LeftHand.Glow = 1
 			}
 		}
+	case BossFight:
+		if g.portal.Dead() && (g.Boss == nil || g.Boss.Dead()) {
+			g.entities = append(g.entities, g.portal)
+			g.portal.Activate()
+		}
 	}
 	// Interact
 	if inpututil.IsKeyJustPressed(ebiten.KeyE) {
@@ -231,8 +243,11 @@ func (g *Game) Update() {
 			item := g.Building.Target.Item
 			g.Building.Pick()
 			item.RegisterMod(g.Player.Core, g.Building)
+			g.Player.Core.Update()
+			assets.PlayBonusPickup()
 		case !g.portal.Dead() && g.portal.Targeted():
 			g.nextStage()
+			assets.PlayPortal()
 			return
 		}
 	}
@@ -261,7 +276,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var ix []uint16
 	// Refresh AoE markers on the floor
 	var shape aoe.Shape
-	if g.Boss != nil {
+	if g.Boss != nil && !g.Boss.Dead() {
 		shape = g.Boss.MarkerShape()
 	} else {
 		shape = g.Building.MarkerShape()
@@ -311,8 +326,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// Player hands
 	g.Player.DrawHands(screen, ctx)
-	// TODO: this is debug
-	screen.DrawImage(g.floor.Image, nil)
 	// Crosshair
 	opts := &ebiten.DrawImageOptions{}
 	opts.GeoM.Translate(

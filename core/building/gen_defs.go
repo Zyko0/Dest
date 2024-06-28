@@ -105,8 +105,6 @@ func main() {
 		if maxStacks, err = strconv.ParseInt(l[5], 10, 64); err != nil {
 			log.Fatal("err: parsing max stacks: ", err)
 		}
-		_, _, _, _, _ = id, kind, hand, description, maxStacks
-		//fmt.Println("i:", i, "name:", name)
 		items = append(items, &item{
 			id:          id,
 			kind:        kind,

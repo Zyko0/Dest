@@ -1,11 +1,14 @@
 package core
 
 import (
+	"math/rand"
+
 	"github.com/Zyko0/Alapae/assets"
 	"github.com/Zyko0/Alapae/core/building"
 	"github.com/Zyko0/Alapae/core/entity"
 	"github.com/Zyko0/Alapae/core/hand"
 	"github.com/Zyko0/Alapae/graphics"
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
@@ -81,16 +84,15 @@ func (p *Player) Update(ctx *entity.Context) {
 	} else {
 		hands = []*hand.Hand{p.ActiveHand}
 	}
-
 	// Shooting
 	if p.status == idle && p.cooldown.Shooting == 0 && ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		p.active.Shooting = ShootingTicks
-		p.cooldown.Shooting = ShootingCD
+		p.cooldown.Shooting = ShootingCD - 5*p.Core.AttackSpeedStacks
 		p.status = shooting
 		// Swap hand if necessary
 		for _, h := range hands {
 			h.Anim = h.ShootAnimation(p.Core.Hand(h.Side).Weapon).NewInstance(h, false)
-			if h == p.RightHand {
+			if h.Side == hand.Right {
 				p.ActiveHand = p.LeftHand
 			} else {
 				p.ActiveHand = p.RightHand
@@ -104,6 +106,7 @@ func (p *Player) Update(ctx *entity.Context) {
 			p.cooldown.Dashing = DashingCD
 			p.active.Invuln = InvulnTicks
 			p.cooldown.Invuln = InvulnCD
+			assets.PlayDash()
 		}
 	}
 	// Hand animation test // TODO:
@@ -116,35 +119,52 @@ func (p *Player) Update(ctx *entity.Context) {
 	p.cooldown.Update()
 	p.resetModifiers()
 	// Ending status
+	if !p.Core.Synced {
+		if p.ActiveHand.Side == hand.Right {
+			hands[0] = p.LeftHand
+		} else {
+			hands[0] = p.RightHand
+		}
+	}
 	for _, h := range hands {
 		switch {
 		case p.status == shooting && p.active.Shooting == 0:
 			off := ctx.PlayerDirection.Mul(0.5 * graphics.SpriteScale)
 			off = off.Add(ctx.CameraRight.Mul(0.75 * h.ShotRightCoeff()))
 			off = off.Sub(ctx.CameraUp.Mul(0.5))
+			// Terminate the hand's shooting animation
+			h.Anim = nil
 			// Shoot a projectile
-			data := p.Core.Projectile(h.Side)
-			ctx.Entities = append(ctx.Entities, entity.NewProjectile(
-				ctx.PlayerPosition.Add(off),
-				ctx.PlayerDirection,
-				data.Radius,
-				data.Speed,
-				data.Damage,
-				entity.TeamAlly,
-				data.ColorIn,
-				data.ColorOut,
-				data.Alpha,
-				data.MaxDuration,
-				data.Resistance,
-			))
-			// If not hand-synced, terminate the other hand's animation
-			//if !p.Core.Synced {
-			if h == p.RightHand {
-				p.LeftHand.Anim = nil
-			} else {
-				p.RightHand.Anim = nil
+			for i := 0; i < p.Core.Hand(h.Side).ProjectileCount; i++ {
+				data := p.Core.Projectile(h.Side)
+				if data.Miss {
+					assets.PlayMiss()
+					// TODO: play animation (?)
+					continue
+				}
+				var extra mgl64.Vec3
+				if i > 0 {
+					extra[0] = rand.Float64() - 0.5
+					extra[1] = rand.Float64() - 0.5
+					extra[2] = rand.Float64() - 0.5
+					extra = extra.Normalize().Mul(1)
+				}
+				ctx.Entities = append(ctx.Entities, entity.NewProjectile(
+					ctx.PlayerPosition.Add(off).Add(extra),
+					ctx.PlayerDirection,
+					data.Radius,
+					data.Speed,
+					data.Damage,
+					entity.TeamAlly,
+					data.ColorIn,
+					data.ColorOut,
+					data.Alpha,
+					data.MaxDuration,
+					data.Resistance,
+				))
+				// Audio
+				assets.PlayShoot()
 			}
-			//}
 		}
 	}
 	// New states
@@ -174,6 +194,7 @@ func (p *Player) TakeHit(dmg float64) {
 		p.Core.Health = max(p.Core.Health-dmg, 0)
 		p.active.Invuln = InvulnTicks
 		p.cooldown.Invuln = InvulnCD
+		assets.PlayHit()
 	}
 }
 

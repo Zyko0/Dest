@@ -37,16 +37,26 @@ func (m *Mod) Init(c *Core, hm *HandModifiers, p *Phase) {
 	case Prayer:
 		if len(hm.Curses) > 0 {
 			i := rand.Intn(len(hm.Curses))
-			hm.Curses = slices.Delete(hm.Curses, i, i+1)
+			hm.Curses[i].Stacks--
+			if hm.Curses[i].Stacks <= 0 {
+				hm.Curses = slices.Delete(hm.Curses, i, i+1)
+			}
 		}
 		c.Health = max(min(c.Health+c.MaxHealth*0.2, c.MaxHealth), 1)
 	case Highroll:
 		p.RollExisting(p.Objects, false)
-	case Striker, Gambler:
-		m.Stacks = c.AttackSpeedStacks
-		c.AttackSpeedStacks = 0
-		for i, m := range c.Bonuses {
-			if m.def.ID == Attack_speed_up {
+	case Striker:
+		for i, b := range c.Bonuses {
+			if b.def.ID == Attack_speed_up {
+				m.Stacks = b.Stacks
+				c.Bonuses = slices.Delete(c.Bonuses, i, i+1)
+				break
+			}
+		}
+	case Gambler:
+		for i, b := range c.Bonuses {
+			if b.def.ID == Luck {
+				m.Stacks = b.Stacks
 				c.Bonuses = slices.Delete(c.Bonuses, i, i+1)
 				break
 			}
@@ -54,11 +64,17 @@ func (m *Mod) Init(c *Core, hm *HandModifiers, p *Phase) {
 	case Dual_Prayer:
 		if len(c.right.Curses) > 0 {
 			r := rand.Intn(len(c.right.Curses))
-			c.right.Curses = slices.Delete(c.right.Curses, r, r+1)
+			c.right.Curses[r].Stacks--
+			if c.right.Curses[r].Stacks <= 0 {
+				c.right.Curses = slices.Delete(c.right.Curses, r, r+1)
+			}
 		}
 		if len(c.left.Curses) > 0 {
 			l := rand.Intn(len(c.left.Curses))
-			c.left.Curses = slices.Delete(c.left.Curses, l, l+1)
+			c.left.Curses[l].Stacks--
+			if c.left.Curses[l].Stacks <= 0 {
+				c.left.Curses = slices.Delete(c.left.Curses, l, l+1)
+			}
 		}
 		c.Health = max(min(c.Health+c.MaxHealth*0.2, c.MaxHealth), 1)
 	case Change_of_mind:
@@ -80,18 +96,18 @@ func (m *Mod) Init(c *Core, hm *HandModifiers, p *Phase) {
 			side = RightHand
 		}
 		hm.Bonuses, hm.Curses = hm.Bonuses[:0], hm.Curses[:0]
-		for _, m := range other.Bonuses {
+		for _, b := range other.Bonuses {
 			hm.Bonuses = append(hm.Bonuses, &Mod{
-				def:    m.def,
+				def:    b.def,
 				side:   side,
-				Stacks: m.Stacks,
+				Stacks: b.Stacks,
 			})
 		}
-		for _, m := range other.Curses {
+		for _, b := range other.Curses {
 			hm.Curses = append(hm.Curses, &Mod{
-				def:    m.def,
+				def:    b.def,
 				side:   side,
-				Stacks: m.Stacks,
+				Stacks: b.Stacks,
 			})
 		}
 	case Trap:
@@ -99,12 +115,10 @@ func (m *Mod) Init(c *Core, hm *HandModifiers, p *Phase) {
 	case Lowroll:
 		p.RollExisting(p.Objects, false)
 	case Sabotage:
-		p.RollExtraCurses(10)
+		p.RollExtraCurses(20)
 	case Procrastination:
 		p.RegisterExtraCurse()
 	}
-	// One apply
-	m.Apply(c, hm)
 }
 
 func (m *Mod) Apply(c *Core, hm *HandModifiers) {
@@ -130,12 +144,10 @@ func (m *Mod) Apply(c *Core, hm *HandModifiers) {
 		case Striker:
 			hm.Damage += 5
 		case Gambler:
-			for i := 0; i < m.Stacks; i++ {
-				if hm.CritChance == 1 {
-					hm.CritDamage += 0.05
-				} else {
-					hm.CritChance += 0.05
-				}
+			if hm.CritChance == 1 {
+				hm.CritDamage += 0.05
+			} else {
+				hm.CritChance += 0.05
 			}
 		case Dual_Prayer:
 		case Dual_damage_way_up:
@@ -180,16 +192,16 @@ func (m *Mod) Apply(c *Core, hm *HandModifiers) {
 			c.Synced = true
 		case Mimic:
 		case Relaxed:
-			c.AttackSpeedStacks -= 1
+			c.AttackSpeedStacks = max(c.AttackSpeedStacks-1, 0)
 		case Clumsy:
 			hm.CritDamage = max(hm.CritDamage-0.2, 0)
 		case Scared:
 			c.MaxHealth = max(5, c.MaxHealth-5)
 			c.Health = min(c.Health, c.MaxHealth)
 		case Inaccurate:
-			hm.Accuracy -= 0.125
+			hm.Accuracy -= 0.05
 		case Heavy:
-			hm.ProjectileSpeed -= 0.25
+			hm.ProjectileSpeed = hm.ProjectileSpeed - 0.25
 		case Trap:
 		case Lowroll:
 		case Sabotage:
@@ -200,6 +212,8 @@ func (m *Mod) Apply(c *Core, hm *HandModifiers) {
 		case Procrastination:
 		case Rest:
 			c.HealthPerStage++
+		case Light:
+			hm.ProjectileSpeed = hm.ProjectileSpeed + 0.25
 		}
 	}
 }
@@ -340,6 +354,7 @@ func (c *Core) Hand(side hand.Side) *HandModifiers {
 type ProjectileData struct {
 	Damage      float64
 	Crit        bool
+	Miss        bool
 	Radius      float64
 	Speed       float64
 	ColorIn     color.Color
@@ -354,25 +369,27 @@ func (c *Core) Projectile(side hand.Side) *ProjectileData {
 	w := h.Weapon
 	p := &ProjectileData{}
 	p.Crit = rand.Float64() < h.CritChance
-	p.Speed = h.ProjectileSpeed
+	p.Miss = rand.Float64() > h.Accuracy
 	p.Damage = h.Damage
 	p.ColorIn = color.White
 	if p.Crit {
 		p.Damage *= h.CritDamage
 		p.ColorIn = color.RGBA{255, 0, 0, 255}
 	}
+	const baseDuration = 5 * 60
 	if w == hand.WeaponFinger {
 		p.Radius = 0.1
 		p.ColorOut = color.RGBA{255, 156, 0, 255}
+		p.Speed = min(max(h.ProjectileSpeed, 0.25), 4)
 		p.Alpha = 1
-		p.MaxDuration = 5 * 60
+		p.MaxDuration = baseDuration + uint(baseDuration*(2-p.Speed))
 		p.Resistance = 1
 	} else {
 		p.Radius = 0.2
-		p.Speed /= 4
 		p.ColorOut = color.RGBA{200, 255, 0, 255}
+		p.Speed = min(max(h.ProjectileSpeed, 0.25), 4) / 4
 		p.Alpha = 0.5
-		p.MaxDuration = 10 * 60
+		p.MaxDuration = baseDuration + uint(baseDuration*(0.5-p.Speed))
 		p.Resistance = 10
 	}
 	return p

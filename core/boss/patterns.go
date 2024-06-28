@@ -54,11 +54,12 @@ func NewMoveTo() PatternInstancier {
 			target,
 			2.,
 			30,
+			false,
 		)
 	}
 }
 
-func NewMoveToEdge() PatternInstancier {
+func NewChargeToEdge() PatternInstancier {
 	return func(ctx *entity.Context) Pattern {
 		pos := ctx.PlayerPosition
 		dir := pos.Sub(ctx.Boss.Position()).Normalize()
@@ -85,6 +86,7 @@ func NewMoveToEdge() PatternInstancier {
 			edge,
 			2.,
 			30,
+			true,
 		)
 	}
 }

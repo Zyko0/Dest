@@ -40,6 +40,7 @@ const (
 	Love
 	Procrastination
 	Rest
+	Light
 	ItemMax
 )
 
@@ -122,7 +123,7 @@ var (
 			Kind:        Uncommon,
 			Hand:        SingleHand,
 			Name:        "Gambler",
-			Description: "Remove all of your attack speed items, gain 5%% critical chance to your %s for each removed stack.",
+			Description: "Remove all of your luck items, gain 5%% critical chance to your %s for each removed stack (2.5%%).",
 			MaxStacks:   InfiniteStacks,
 			Rect:        image.Rect(128, 128, 256, 256),
 		},
@@ -257,7 +258,7 @@ var (
 			Kind:        Cursed,
 			Hand:        BothHands,
 			Name:        "Relaxed",
-			Description: "-8%% attack speed to %s.",
+			Description: "-15%% attack speed to %s.",
 			MaxStacks:   InfiniteStacks,
 			Rect:        image.Rect(256, 384, 384, 512),
 		},
@@ -284,7 +285,7 @@ var (
 			Kind:        Cursed,
 			Hand:        SingleHand,
 			Name:        "Inaccurate",
-			Description: "Miss 12.5%% more shots with your %s.",
+			Description: "Miss 5%% more shots with your %s.",
 			MaxStacks:   8,
 			Rect:        image.Rect(640, 384, 768, 512),
 		},
@@ -293,8 +294,8 @@ var (
 			Kind:        Cursed,
 			Hand:        SingleHand,
 			Name:        "Heavy",
-			Description: "-12.5%% projectile speed with your %s.",
-			MaxStacks:   8,
+			Description: "-15%% projectile speed with your %s.",
+			MaxStacks:   InfiniteStacks,
 			Rect:        image.Rect(768, 384, 896, 512),
 		},
 		Trap: {
@@ -320,7 +321,7 @@ var (
 			Kind:        Cursed,
 			Hand:        None,
 			Name:        "Sabotage",
-			Description: "Add 10 extra random curses spread among current items present on the floor.",
+			Description: "Add 20 extra random curses spread among current items present on the floor.",
 			MaxStacks:   InfiniteStacks,
 			Rect:        image.Rect(256, 512, 384, 640),
 		},
@@ -359,10 +360,19 @@ var (
 			Description: "Recover 1 extra health point after each boss stage.",
 			MaxStacks:   InfiniteStacks,
 			Rect:        image.Rect(768, 512, 896, 640),
+		},
+		Light: {
+			ID:          35,
+			Kind:        Uncommon,
+			Hand:        SingleHand,
+			Name:        "Light",
+			Description: "+15%% projectile speed with your %s.",
+			MaxStacks:   InfiniteStacks,
+			Rect:        image.Rect(0, 640, 128, 768),
 		}}
 
 	commons     = []int{0, 1, 2, 3, 4, 34}
-	uncommons   = []int{5, 6, 7, 8, 9}
+	uncommons   = []int{5, 6, 7, 8, 9, 35}
 	rares       = []int{10, 11, 12, 13, 14}
 	epics       = []int{15, 16, 17, 18, 19}
 	legendaries = []int{20, 21, 22}

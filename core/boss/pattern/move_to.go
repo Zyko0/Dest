@@ -3,6 +3,7 @@ package pattern
 import (
 	"math"
 
+	"github.com/Zyko0/Alapae/assets"
 	"github.com/Zyko0/Alapae/core/aoe"
 	"github.com/Zyko0/Alapae/core/entity"
 	"github.com/Zyko0/Alapae/graphics"
@@ -21,9 +22,10 @@ type MoveTo struct {
 	traveled float64
 	speed    float64
 	delay    uint
+	charge   bool
 }
 
-func NewMoveTo(pos, target mgl64.Vec3, speed float64, delay uint) *MoveTo {
+func NewMoveTo(pos, target mgl64.Vec3, speed float64, delay uint, charge bool) *MoveTo {
 	mt := &MoveTo{
 		pos:      pos,
 		target:   target,
@@ -32,6 +34,7 @@ func NewMoveTo(pos, target mgl64.Vec3, speed float64, delay uint) *MoveTo {
 		traveled: 0,
 		speed:    speed,
 		delay:    delay,
+		charge:   charge,
 	}
 	mt.angle = math.Atan2(mt.dir.X(), mt.dir.Z())
 
@@ -92,6 +95,9 @@ func (mt *MoveTo) Update(ctx *entity.Context) {
 		ctx.Boss.SetStance(entity.StanceIdle)
 	}
 	// Dash
+	if mt.ticks == mt.delay && mt.charge {
+		assets.PlayBossCharge()
+	}
 	if mt.ticks > mt.delay {
 		delta := mt.dir
 		if mt.traveled+mt.speed > mt.length {

@@ -7,7 +7,7 @@ id,rarity,hand,name,description,max_stacks
 5,1,1,Dual damage up,+2.5 flat damage to %s.,-1
 6,1,1,Attack speed up,+15%% attack speed to %s.,6
 7,1,0,Striker,"Remove all of your attack speed items, gain +5 flat damage to your %s for each removed stack. ",-1
-8,1,0,Gambler,"Remove all of your attack speed items, gain 5%% critical chance to your %s for each removed stack.",-1
+8,1,0,Gambler,"Remove all of your luck items, gain 5%% critical chance to your %s for each removed stack (2.5%%).",-1
 9,1,1,Dual Prayer,Remove a random curse from %s (2 in total) and heal for 20%% of your max health.,-1
 10,2,1,Dual damage way up,+5 flat damage to %s.,-1
 11,2,1,Critical damage,+10%% critical damage to %s.,-1
@@ -22,15 +22,16 @@ id,rarity,hand,name,description,max_stacks
 20,4,0,Homing,Projectiles from your %s are homing.,1
 21,4,1,Sync,Fire %s at the same time.,1
 22,4,0,Mimic,Your %s becomes a perfect clone of your other hand (copies all its items and curses).,-1
-23,5,1,Relaxed,-8%% attack speed to %s.,-1
+23,5,1,Relaxed,-15%% attack speed to %s.,-1
 24,5,0,Clumsy,-20%% critical damage to your %s.,-1
 25,5,2,Scared,-5 maximum health.,19
-26,5,0,Inaccurate,Miss 12.5%% more shots with your %s.,8
-27,5,0,Heavy,-12.5%% projectile speed with your %s.,8
+26,5,0,Inaccurate,Miss 5%% more shots with your %s.,8
+27,5,0,Heavy,-15%% projectile speed with your %s.,-1
 28,5,2,Trap,Take a hit for 10% of your current health.,-1
 29,5,2,Lowroll,Re-roll current items present on the floor (does not remove their curses if any).,-1
-30,5,2,Sabotage,Add 10 extra random curses spread among current items present on the floor.,-1
+30,5,2,Sabotage,Add 20 extra random curses spread among current items present on the floor.,-1
 31,5,0,Delicate,-10 flat damage to your %s.,-1
 32,5,0,Love,"When your %s hits the target, the target is pulled closer to you by an additional step.",-1
 33,5,0,Procrastination,The next item you pick for your %s gets an additional random curse.,1
 34,0,2,Rest,Recover 1 extra health point after each boss stage.,-1
+35,1,0,Light,+15%% projectile speed with your %s.,-1

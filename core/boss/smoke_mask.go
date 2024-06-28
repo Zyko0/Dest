@@ -63,8 +63,8 @@ func NewSmokeMask(position mgl64.Vec3) *SmokeMask {
 			rand.Float64() - 0.5,
 		}.Normalize(),
 		// TODO: hp
-		health:    3500,
-		maxHealth: 3500,
+		health:    10000,
+		maxHealth: 10000,
 	}
 }
 
@@ -98,14 +98,21 @@ func (sm *SmokeMask) TakeHit(dmg float64) {
 func (sm *SmokeMask) Update(ctx *entity.Context) {
 	if !sm.phase2init && sm.phase() == 1 {
 		sm.seq = newSequence(
-			NewMoveToEdge(),
+			NewChargeToEdge(),
 			NewRandomWalk(),
-			NewShoot(), NewShoot(), NewShoot(), NewShoot(), NewShoot(),
+			NewShoot(), NewShoot(),
+			NewMultiPattern(NewShoot(), NewRandomWalk()),
+			NewMultiPattern(NewShoot(), NewRandomWalk()),
+			NewMultiPattern(NewShoot(), NewRandomWalk()),
+			NewShoot(), NewShoot(),
 			NewRandomWalk(),
+			NewShoot(),
 			NewMultiPattern(
 				NewComet(), NewComet(), NewComet(),
 				NewComet(), NewComet(), NewComet(),
+				NewComet(), NewComet(), NewComet(),
 			),
+			NewShoot(),
 			NewRandomWalk(), NewRandomWalk(), NewRandomWalk(),
 		)
 		sm.phase2init = true
@@ -113,13 +120,23 @@ func (sm *SmokeMask) Update(ctx *entity.Context) {
 	if sm.seq == nil {
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
 			sm.seq = newSequence(
-				NewMoveToEdge(), NewMoveToEdge(), NewMoveToEdge(),
+				NewChargeToEdge(), NewChargeToEdge(), NewChargeToEdge(),
 				NewRandomWalk(),
-				NewShoot(), NewRandomWalk(),
-				NewShoot(), NewRandomWalk(),
-				NewShoot(), NewRandomWalk(),
+				NewShoot(), NewShoot(), NewRandomWalk(),
+				NewShoot(), NewShoot(), NewRandomWalk(),
+				NewShoot(), NewShoot(), NewRandomWalk(),
 				NewRandomWalk(),
-				NewComet(), NewComet(), NewComet(),
+				NewMultiPattern(
+					NewShoot(), NewComet(), NewComet(), NewComet(),
+				),
+				NewRandomWalk(),
+				NewMultiPattern(
+					NewShoot(), NewComet(), NewComet(), NewComet(),
+				),
+				NewRandomWalk(),
+				NewMultiPattern(
+					NewShoot(), NewComet(), NewComet(), NewComet(),
+				),
 				NewRandomWalk(), NewRandomWalk(),
 			)
 
@@ -234,5 +251,5 @@ func (sm *SmokeMask) Radius() float64 {
 }
 
 func (sm *SmokeMask) Dead() bool {
-	return false
+	return sm.health <= 0
 }

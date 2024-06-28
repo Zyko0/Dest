@@ -8,6 +8,8 @@ github.com/ebitengine/gomobile v0.0.0-20240518074828-e86332849895 h1:48bCqKTuD7Z
 github.com/ebitengine/gomobile v0.0.0-20240518074828-e86332849895/go.mod h1:XZdLv05c5hOZm3fM2NlJ92FyEZjnslcMcNRrhxs8+8M=
 github.com/ebitengine/hideconsole v1.0.0 h1:5J4U0kXF+pv/DhiXt5/lTz0eO5ogJ1iXb8Yj1yReDqE=
 github.com/ebitengine/hideconsole v1.0.0/go.mod h1:hTTBTvVYWKBuxPr7peweneWdkUwEuHuB3C1R/ielR1A=
+github.com/ebitengine/oto/v3 v3.3.0-alpha.1 h1:J2nBmQwPLKc4+yLObytq1jKNydI96l6EjZfgefiqGbk=
+github.com/ebitengine/oto/v3 v3.3.0-alpha.1/go.mod h1:T2/VV0UWG97GEEf4kORMU2nCneYT/YmwSTxPutSVaUg=
 github.com/ebitengine/purego v0.8.0-alpha.2 h1:+Kyr9n4eXAGMzhtWJxfdQ7AzGn0+6ZWihfCCxul3Dso=
 github.com/ebitengine/purego v0.8.0-alpha.2/go.mod h1:w5fARo4H5UrAgQTz0yqDfZ6bjstTQwUFmO+TN+nHlWE=
 github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nosvA=
@@ -24,6 +26,10 @@ github.com/hajimehoshi/ebiten/v2 v2.8.0-alpha.1.0.20240505114735-5d4a68b0ea9e h1
 github.com/hajimehoshi/ebiten/v2 v2.8.0-alpha.1.0.20240505114735-5d4a68b0ea9e/go.mod h1:+zSQq3pUAhZerDUN4npOPW9StkdYh7W8Xk7KFuQgfwE=
 github.com/jezek/xgb v1.1.1 h1:bE/r8ZZtSv7l9gk6nU0mYx51aXrvnyb44892TwSaqS4=
 github.com/jezek/xgb v1.1.1/go.mod h1:nrhwO0FX/enq75I7Y7G8iN1ubpSGZEiA3v9e9GyRFlk=
+github.com/jfreymuth/oggvorbis v1.0.5 h1:u+Ck+R0eLSRhgq8WTmffYnrVtSztJcYrl588DM4e3kQ=
+github.com/jfreymuth/oggvorbis v1.0.5/go.mod h1:1U4pqWmghcoVsCJJ4fRBKv9peUJMBHixthRlBeD6uII=
+github.com/jfreymuth/vorbis v1.0.2 h1:m1xH6+ZI4thH927pgKD8JOH4eaGRm18rEE9/0WKjvNE=
+github.com/jfreymuth/vorbis v1.0.2/go.mod h1:DoftRo4AznKnShRl1GxiTFCseHr4zR9BN3TWXyuzrqQ=
 golang.org/x/image v0.0.0-20190321063152-3fc05d484e9f/go.mod h1:kZ7UVZpmo3dzQBMxlp+ypCbDeSB+sBbTgSJuh5dn5js=
 golang.org/x/image v0.16.0 h1:9kloLAKhUufZhA12l5fwnx2NZW39/we1UhBesW433jw=
 golang.org/x/image v0.16.0/go.mod h1:ugSZItdV4nOxyqp56HmXwH0Ry0nBCpjnZdpDaIHdoPs=

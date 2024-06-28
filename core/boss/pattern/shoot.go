@@ -3,6 +3,7 @@ package pattern
 import (
 	"image/color"
 
+	"github.com/Zyko0/Alapae/assets"
 	"github.com/Zyko0/Alapae/core/aoe"
 	"github.com/Zyko0/Alapae/core/entity"
 	"github.com/Zyko0/Alapae/graphics"
@@ -53,6 +54,7 @@ func (s *Shoot) Update(ctx *entity.Context) {
 			1, 5*60, 1,
 		)
 		ctx.Entities = append(ctx.Entities, p)
+		assets.PlayBossShoot()
 		s.over = true
 	}
 	s.ticks++
