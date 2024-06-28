@@ -111,7 +111,7 @@ var (
 		Striker: {
 			ID:          7,
 			Kind:        Uncommon,
-			Hand:        BothHands,
+			Hand:        SingleHand,
 			Name:        "Striker",
 			Description: "Remove all of your attack speed items, gain +5 flat damage to your %s for each removed stack. ",
 			MaxStacks:   InfiniteStacks,
@@ -120,7 +120,7 @@ var (
 		Gambler: {
 			ID:          8,
 			Kind:        Uncommon,
-			Hand:        BothHands,
+			Hand:        SingleHand,
 			Name:        "Gambler",
 			Description: "Remove all of your attack speed items, gain 5%% critical chance to your %s for each removed stack.",
 			MaxStacks:   InfiniteStacks,

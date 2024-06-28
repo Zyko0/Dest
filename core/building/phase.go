@@ -221,8 +221,8 @@ func (p *Phase) Pick() {
 				p.Objects[index].picked = true
 				p.Objects = slices.Delete(p.Objects, index, index+1)
 			}
-			// Curse 7 items objects
-			p.RollExtraCurses(7)
+			// Curse 10 items objects
+			p.RollExtraCurses(10)
 		}
 		if len(p.NextExtraCurses) > 0 {
 			p.Target.Item.Curses = append(p.Target.Item.Curses, p.NextExtraCurses...)

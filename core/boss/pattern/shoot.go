@@ -46,10 +46,11 @@ func (s *Shoot) Update(ctx *entity.Context) {
 		p := entity.NewProjectile(
 			ctx.Boss.Position().Add(dir.Mul(2.5)),
 			dir,
-			1, s.speed,
+			1, s.speed, 5,
 			entity.TeamEnemy,
-			color.RGBA{220, 0, 0, 255},
 			color.RGBA{255, 192, 192, 255},
+			color.RGBA{220, 0, 0, 255},
+			1, 5*60, 1,
 		)
 		ctx.Entities = append(ctx.Entities, p)
 		s.over = true

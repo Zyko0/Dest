@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"log"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/Zyko0/Alapae/ui"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
@@ -26,7 +28,9 @@ type Game struct {
 	offscreen *ebiten.Image
 	game      *core.Game
 	hud       *ui.HUD
+	stats     *ui.Stats
 
+	paused  bool
 	updated bool
 }
 
@@ -39,12 +43,30 @@ func New() *Game {
 			45,
 			float64(ScreenWidth)/float64(ScreenHeight),
 		), image.Rect(0, 0, ScreenWidth, ScreenHeight)),
+		hud:   &ui.HUD{},
+		stats: ui.NewStats(),
 	}
 }
 
 func (g *Game) Update() error {
 	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
+		// TODO: remove
 		return ebiten.Termination
+	}
+	// Pause
+	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
+		g.paused = !g.paused
+	}
+	if g.paused {
+		input.SetLastCursor(ebiten.CursorPosition())
+		ebiten.SetCursorMode(ebiten.CursorModeVisible)
+		sctx := &ui.StatsContext{
+			Title: "Pause",
+			Build: g.game.Player.Core,
+		}
+		g.stats.Update(sctx)
+		g.updated = true
+		return nil
 	}
 	if !input.EnsureCursorCaptured() {
 		// TODO: don't treat input instead of returning here, but keep the
@@ -69,27 +91,41 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	if g.updated {
-		g.game.Draw(g.offscreen)
-		// HUD
-		hudCtx := &ui.HUDContext{
-			Stage:       g.game.StageNumber(),
-			StageKind:   g.game.Stage(),
-			PlayerHP:    g.game.Player.Core.Health,
-			PlayerMaxHP: g.game.Player.Core.MaxHealth,
-		}
-		switch hudCtx.StageKind {
-		case core.Building:
-			if g.game.Building.Target != nil {
-				hudCtx.TargetItem = g.game.Building.Target.Item
+		if g.paused {
+			g.stats.Draw(g.offscreen)
+		} else {
+			g.game.Draw(g.offscreen)
+			// HUD
+			hudCtx := &ui.HUDContext{
+				Stage:       g.game.StageNumber(),
+				StageKind:   g.game.Stage(),
+				PlayerHP:    g.game.Player.Core.Health,
+				PlayerMaxHP: g.game.Player.Core.MaxHealth,
 			}
-		case core.BossFight:
-			hudCtx.BossHP = g.game.Boss.Health()
-			hudCtx.BossMaxHP = g.game.Boss.MaxHealth()
+			switch hudCtx.StageKind {
+			case core.Building:
+				if g.game.Building.Target != nil {
+					hudCtx.TargetItem = g.game.Building.Target.Item
+				}
+			case core.BossFight:
+				hudCtx.BossHP = g.game.Boss.Health()
+				hudCtx.BossMaxHP = g.game.Boss.MaxHealth()
+			}
+			g.hud.Draw(g.offscreen, hudCtx)
 		}
-		g.hud.Draw(g.offscreen, hudCtx)
 		g.updated = false
 	}
 	screen.DrawImage(g.offscreen, nil)
+
+	// Debug
+	ebitenutil.DebugPrint(
+		screen,
+		fmt.Sprintf("TPS: %0.2f - FPS %.02f",
+			ebiten.ActualTPS(),
+			ebiten.ActualFPS(),
+			//g.game camera.Position(), g.camera.Direction(),
+		),
+	)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -100,8 +136,9 @@ func main() {
 	// Note: Force opengl
 	ebiten.SetVsyncEnabled(false)
 	ebiten.SetTPS(core.TPS)
-	ebiten.SetFullscreen(true) // TODO: true
+	ebiten.SetFullscreen(true)
 	ebiten.SetWindowSize(ScreenWidth, ScreenHeight)
+	ebiten.SetCursorShape(ebiten.CursorShapeCrosshair)
 
 	if err := ebiten.RunGameWithOptions(New(), &ebiten.RunGameOptions{
 		GraphicsLibrary: ebiten.GraphicsLibraryOpenGL,

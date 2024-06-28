@@ -18,6 +18,10 @@ var (
 	lcx, lcy int
 )
 
+func SetLastCursor(cx, cy int) {
+	lcx, lcy = cx, cy
+}
+
 func EnsureCursorCaptured() bool {
 	if ebiten.CursorMode() == ebiten.CursorModeCaptured {
 		return true

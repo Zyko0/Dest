@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"image"
 	"math"
 	"math/rand"
@@ -14,9 +13,9 @@ import (
 	"github.com/Zyko0/Alapae/core/entity"
 	"github.com/Zyko0/Alapae/graphics"
 	"github.com/Zyko0/Alapae/input"
+	"github.com/Zyko0/Alapae/logic"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
@@ -27,9 +26,10 @@ const (
 )
 
 type Game struct {
-	seed  float32
-	floor *Floor
-	stage int
+	seed   float32
+	floor  *Floor
+	portal *entity.Portal
+	stage  int
 
 	Player   *Player
 	Building *building.Phase
@@ -42,15 +42,18 @@ type Game struct {
 func NewGame(camera *Camera, resolution image.Rectangle) *Game {
 	p := newPlayer()
 
-	return &Game{
-		seed:  rand.Float32(),
-		floor: newFloor(),
+	g := &Game{
+		seed:   rand.Float32(),
+		floor:  newFloor(),
+		portal: entity.NewPortal(),
 
 		camera:   camera,
 		Player:   p,
 		Building: building.NewPhase(p.Core),
 		entities: []entity.Entity{},
 	}
+	g.initStage()
+	return g
 }
 
 var (
@@ -75,7 +78,7 @@ func (g *Game) processInput() {
 		g.camera.Position(),
 		g.camera.Direction(),
 		g.camera.Right(),
-		PlayerMovementSpeed*g.Player.SpeedMod,
+		PlayerMovementSpeed*g.Player.speedMod,
 	)
 	pos[0] = max(min(pos[0], ArenaSize-PlayerSize.X()/2), 0)
 	pos[2] = max(min(pos[2], ArenaSize-PlayerSize.Z()/2), 0)
@@ -100,19 +103,40 @@ func (g *Game) Stage() Stage {
 	return BossFight
 }
 
-func (g *Game) InitStage() {
+func (g *Game) initStage() {
+	g.entities = g.entities[:0]
 	if g.Stage() == Building {
 		g.Building.RollNew()
 		g.entities = g.Building.AppendEntities(g.entities)
+		g.entities = append(g.entities, g.portal)
+		g.portal.Activate()
+		g.camera.SetPosition(mgl64.Vec3{
+			graphics.SpriteScale,
+			g.camera.position.Y(),
+			logic.ArenaSize - graphics.SpriteScale,
+		})
+		g.camera.SetYawPitch(2.5, 0)
 		return
 	}
 	b := boss.NewSmokeMask(mgl64.Vec3{
-		192 / 2,
+		logic.ArenaSize - graphics.SpriteScale,
 		graphics.SpriteScale,
-		192,
+		graphics.SpriteScale,
 	})
 	g.Boss = b
 	g.entities = append(g.entities, b)
+	g.portal.Deactivate()
+	g.camera.SetPosition(mgl64.Vec3{
+		graphics.SpriteScale,
+		g.camera.position.Y(),
+		logic.ArenaSize - graphics.SpriteScale,
+	})
+	g.camera.SetYawPitch(2.5, 0)
+}
+
+func (g *Game) nextStage() {
+	g.stage++
+	g.initStage()
 }
 
 func (g *Game) StageSheetImage() *ebiten.Image {
@@ -123,42 +147,44 @@ func (g *Game) StageSheetImage() *ebiten.Image {
 }
 
 func (g *Game) Update() {
-	if inpututil.IsKeyJustReleased(ebiten.KeyEnter) {
-		g.InitStage()
-	}
 	// TODO: Debug
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		g.floor.AddMarker(aoe.NewMarker(
-			/*&aoe.Circle{
-				X:      ArenaSize / 2,
-				Y:      ArenaSize / 2,
-				Radius: 45,
-			},*/
-			/*&aoe.XCross{
-				Size:         ArenaSize,
-				Radius:       0.25,
-				Rotation:     0,
-				RotationIncr: 0.025,
-			},*/
-			/*&aoe.Arrow{
-				X:        ArenaSize / 2,
-				Y:        ArenaSize / 2,
-				Size:     50,
-				Rotation: 0,
-			},*/
-			&aoe.CircleBorder{
+		//g.floor.AddMarker(aoe.NewMarker(
+		/*&aoe.Circle{
+			X:      ArenaSize / 2,
+			Y:      ArenaSize / 2,
+			Radius: 45,
+		},*/
+		/*&aoe.XCross{
+			Size:         ArenaSize,
+			Radius:       0.25,
+			Rotation:     0,
+			RotationIncr: 0.025,
+		},*/
+		/*&aoe.Arrow{
+			X:        ArenaSize / 2,
+			Y:        ArenaSize / 2,
+			Size:     50,
+			Rotation: 0,
+		},*/
+		/*&aoe.CircleBorder{
 				X:      ArenaSize / 2,
 				Y:      ArenaSize / 2,
 				Radius: 45,
 			},
 			60, 120000,
-		))
+		))*/
+	}
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
+		g.nextStage()
 	}
 	// End debug
 
 	// Inputs and camera
 	g.processInput()
 	g.camera.Update()
+	// Entity collisions
+	g.handleCollisions()
 	// Updates
 	ctx := &entity.Context{
 		CameraRight:     g.camera.right,
@@ -196,16 +222,21 @@ func (g *Game) Update() {
 			case building.LeftHand:
 				g.Player.LeftHand.Glow = 1
 			}
-			// Item picking
-			if inpututil.IsKeyJustPressed(ebiten.KeyE) {
-				item := g.Building.Target.Item
-				g.Building.Pick()
-				item.RegisterMod(g.Player.Core, g.Building)
-			}
+		}
+	}
+	// Interact
+	if inpututil.IsKeyJustPressed(ebiten.KeyE) {
+		switch {
+		case g.Stage() == Building && g.Building.Target != nil:
+			item := g.Building.Target.Item
+			g.Building.Pick()
+			item.RegisterMod(g.Player.Core, g.Building)
+		case !g.portal.Dead() && g.portal.Targeted():
+			g.nextStage()
+			return
 		}
 	}
 
-	// TODO: collisions
 	// Update/add floor AoE markers
 	for _, m := range ctx.Markers {
 		g.floor.AddMarker(m)
@@ -235,6 +266,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	} else {
 		shape = g.Building.MarkerShape()
 	}
+	if shape == nil && !g.portal.Dead() {
+		shape = g.portal.MarkerShape()
+	}
 	g.floor.Draw(shape)
 	// Draw arena scene
 	vx, ix = graphics.AppendRectVerticesIndices(
@@ -259,7 +293,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// Entities
 	index := 0
 	vx, ix = vx[:0], ix[:0]
-	// TODO: cache the lengths
+	// TODO: cache the lengths?
 	sort.SliceStable(g.entities, func(i, j int) bool {
 		li := pos.Sub(g.entities[i].Position()).LenSqr()
 		lj := pos.Sub(g.entities[j].Position()).LenSqr()
@@ -286,15 +320,4 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		float64(screen.Bounds().Dy())/2-float64(assets.CursorImage.Bounds().Dy())/2,
 	)
 	screen.DrawImage(assets.CursorImage, opts)
-
-	// Debug
-	y, p := g.camera.YawPitch()
-	ebitenutil.DebugPrint(
-		screen,
-		fmt.Sprintf("TPS: %0.2f - FPS %.02f - y %.02f p %.02f - pos %v - dir %v",
-			ebiten.ActualTPS(),
-			ebiten.ActualFPS(),
-			y, p, g.camera.Position(), g.camera.Direction(),
-		),
-	)
 }

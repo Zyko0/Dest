@@ -6,8 +6,8 @@ id,rarity,hand,name,description,max_stacks
 4,0,2,Highroll,Re-roll current items present on the floor (does not remove their curses if any).,-1
 5,1,1,Dual damage up,+2.5 flat damage to %s.,-1
 6,1,1,Attack speed up,+15%% attack speed to %s.,6
-7,1,1,Striker,"Remove all of your attack speed items, gain +5 flat damage to your %s for each removed stack. ",-1
-8,1,1,Gambler,"Remove all of your attack speed items, gain 5%% critical chance to your %s for each removed stack.",-1
+7,1,0,Striker,"Remove all of your attack speed items, gain +5 flat damage to your %s for each removed stack. ",-1
+8,1,0,Gambler,"Remove all of your attack speed items, gain 5%% critical chance to your %s for each removed stack.",-1
 9,1,1,Dual Prayer,Remove a random curse from %s (2 in total) and heal for 20%% of your max health.,-1
 10,2,1,Dual damage way up,+5 flat damage to %s.,-1
 11,2,1,Critical damage,+10%% critical damage to %s.,-1

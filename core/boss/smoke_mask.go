@@ -63,8 +63,8 @@ func NewSmokeMask(position mgl64.Vec3) *SmokeMask {
 			rand.Float64() - 0.5,
 		}.Normalize(),
 		// TODO: hp
-		health:    0,
-		maxHealth: 0,
+		health:    3500,
+		maxHealth: 3500,
 	}
 }
 
@@ -85,6 +85,14 @@ func (sm *SmokeMask) MaxHealth() float64 {
 
 func (sm *SmokeMask) Team() entity.Team {
 	return entity.TeamEnemy
+}
+
+func (sm *SmokeMask) Damage() float64 {
+	return 10
+}
+
+func (sm *SmokeMask) TakeHit(dmg float64) {
+	sm.health = max(sm.health-dmg, 0)
 }
 
 func (sm *SmokeMask) Update(ctx *entity.Context) {

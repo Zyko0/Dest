@@ -20,6 +20,12 @@ func (i *ItemObject) Team() entity.Team {
 	return entity.TeamNone
 }
 
+func (i *ItemObject) TakeHit(_ float64) {}
+
+func (i *ItemObject) Damage() float64 {
+	return 0
+}
+
 func (i *ItemObject) Update(ctx *entity.Context) {
 	if i.picked {
 		return

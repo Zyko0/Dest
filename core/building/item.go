@@ -81,7 +81,7 @@ func (i *Item) Description() string {
 	return fmt.Sprintf(i.def.Description, i.HandSide.String())
 }
 
-func upsertMod(mods *[]*Mod, def *Definition) *Mod {
+func upsertMod(mods *[]*Mod, side HandSide, def *Definition) *Mod {
 	for _, m := range *mods {
 		if def.ID == m.def.ID {
 			m.Stacks++
@@ -90,6 +90,7 @@ func upsertMod(mods *[]*Mod, def *Definition) *Mod {
 	}
 	m := &Mod{
 		def:    def,
+		side:   side,
 		Stacks: 1,
 	}
 	*mods = append(*mods, m)
@@ -99,7 +100,15 @@ func upsertMod(mods *[]*Mod, def *Definition) *Mod {
 
 func isOneShotItem(i *Item) bool {
 	switch i.def.ID {
-	case Prayer, Highroll, Change_of_mind, Mimic, Trap, Lowroll, Sabotage:
+	case Prayer,
+		Dual_Prayer,
+		Highroll,
+		Change_of_mind,
+		Mimic,
+		Trap,
+		Lowroll,
+		Sabotage,
+		Procrastination:
 		return true
 	default:
 		return false
@@ -118,35 +127,32 @@ func (i *Item) RegisterMod(c *Core, phase *Phase) {
 			hm = c.left
 		}
 		m := &Mod{
-			def: i.def,
+			def:  i.def,
+			side: i.HandSide,
 		}
 		m.Init(c, hm, phase)
-	case i.def.Hand == None:
+	case i.def.Hand == None || i.def.Hand == BothHands:
 		// Global modifiers
 		switch i.def.Kind {
 		case Cursed:
-			upsertMod(&c.Curses, i.def).Init(c, nil, phase)
+			upsertMod(&c.Curses, BothHand, i.def).Init(c, nil, phase)
 		default:
-			upsertMod(&c.Bonuses, i.def).Init(c, nil, phase)
+			upsertMod(&c.Bonuses, BothHand, i.def).Init(c, nil, phase)
 		}
 	default:
 		// Hand modifiers
-		var hands []*HandModifiers
+		var h *HandModifiers
 		switch i.HandSide {
 		case RightHand:
-			hands = []*HandModifiers{c.right}
+			h = c.right
 		case LeftHand:
-			hands = []*HandModifiers{c.left}
-		case BothHand:
-			hands = []*HandModifiers{c.right, c.left}
+			h = c.left
 		}
-		for _, h := range hands {
-			switch i.def.Kind {
-			case Cursed:
-				upsertMod(&h.Curses, i.def).Init(c, hands[0], phase)
-			default:
-				upsertMod(&h.Bonuses, i.def).Init(c, hands[0], phase)
-			}
+		switch i.def.Kind {
+		case Cursed:
+			upsertMod(&h.Curses, i.HandSide, i.def).Init(c, h, phase)
+		default:
+			upsertMod(&h.Bonuses, i.HandSide, i.def).Init(c, h, phase)
 		}
 	}
 	// Curses

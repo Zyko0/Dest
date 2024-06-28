@@ -207,6 +207,9 @@ func init() {
 }
 
 func (a *AnimationInstance) Update(hand *Hand) {
+	if a == nil {
+		return
+	}
 	/*a.animation = TestAnimation.Value() // TODO: tmp
 	if err := TestAnimation.Error(); err != nil {
 		fmt.Println("err:", err)

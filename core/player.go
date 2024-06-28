@@ -1,8 +1,6 @@
 package core
 
 import (
-	"image/color"
-
 	"github.com/Zyko0/Alapae/assets"
 	"github.com/Zyko0/Alapae/core/building"
 	"github.com/Zyko0/Alapae/core/entity"
@@ -17,6 +15,8 @@ const (
 
 	ShootingTicks   = 15
 	ShootingCD      = 30
+	InvulnTicks     = 20
+	InvulnCD        = InvulnTicks
 	DashingTicks    = 10
 	DashingCD       = 60
 	DashingSpeedMod = 3
@@ -39,32 +39,29 @@ type status byte
 const (
 	idle status = iota
 	moving
-	dashing
 	shooting
 )
 
 type Player struct {
-	Status     status
+	status   status
+	speedMod float64
+	active   *state
+	cooldown *state
+
 	Core       *building.Core
 	ActiveHand *hand.Hand
 	RightHand  *hand.Hand
 	LeftHand   *hand.Hand
-	Active     *state
-	Cooldown   *state
-	SpeedMod   float64
-	// TODO: hands
-	// TODO: powerups
-	// TODO: curses
 }
 
 func newPlayer() *Player {
 	p := &Player{
-		Status:    idle,
+		status:    idle,
 		Core:      building.NewCore(),
 		RightHand: hand.New(hand.Right),
 		LeftHand:  hand.New(hand.Left),
-		Active:    &state{},
-		Cooldown:  &state{},
+		active:    &state{},
+		cooldown:  &state{},
 	}
 	p.ActiveHand = p.RightHand
 	p.resetModifiers()
@@ -73,7 +70,7 @@ func newPlayer() *Player {
 }
 
 func (p *Player) resetModifiers() {
-	p.SpeedMod = 1
+	p.speedMod = 1
 	// TODO: ?
 }
 
@@ -86,10 +83,10 @@ func (p *Player) Update(ctx *entity.Context) {
 	}
 
 	// Shooting
-	if p.Status == idle && p.Cooldown.Shooting == 0 && ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-		p.Active.Shooting = ShootingTicks
-		p.Cooldown.Shooting = ShootingCD
-		p.Status = shooting
+	if p.status == idle && p.cooldown.Shooting == 0 && ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		p.active.Shooting = ShootingTicks
+		p.cooldown.Shooting = ShootingCD
+		p.status = shooting
 		// Swap hand if necessary
 		for _, h := range hands {
 			h.Anim = h.ShootAnimation(p.Core.Hand(h.Side).Weapon).NewInstance(h, false)
@@ -102,39 +99,43 @@ func (p *Player) Update(ctx *entity.Context) {
 	}
 	// Dashing
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		if p.Active.Dashing == 0 && p.Cooldown.Dashing == 0 {
-			p.Active.Dashing = DashingTicks
-			p.Cooldown.Dashing = DashingCD
+		if p.active.Dashing == 0 && p.cooldown.Dashing == 0 {
+			p.active.Dashing = DashingTicks
+			p.cooldown.Dashing = DashingCD
+			p.active.Invuln = InvulnTicks
+			p.cooldown.Invuln = InvulnCD
 		}
 	}
-	// Hand animation test
+	// Hand animation test // TODO:
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		/*ctx.Entities = append(ctx.Entities, entity.NewComet(
-			mgl64.Vec3{192 / 2, 100, 192 / 2},
-			1, 2,
-		))*/
+
 	}
 
 	// Update current effects
-	p.Active.Update()
-	p.Cooldown.Update()
+	p.active.Update()
+	p.cooldown.Update()
 	p.resetModifiers()
 	// Ending status
 	for _, h := range hands {
 		switch {
-		case p.Status == shooting && p.Active.Shooting == 0:
+		case p.status == shooting && p.active.Shooting == 0:
 			off := ctx.PlayerDirection.Mul(0.5 * graphics.SpriteScale)
 			off = off.Add(ctx.CameraRight.Mul(0.75 * h.ShotRightCoeff()))
 			off = off.Sub(ctx.CameraUp.Mul(0.5))
 			// Shoot a projectile
+			data := p.Core.Projectile(h.Side)
 			ctx.Entities = append(ctx.Entities, entity.NewProjectile(
 				ctx.PlayerPosition.Add(off),
 				ctx.PlayerDirection,
-				0.1,
-				p.Core.Hand(h.Side).ProjectileSpeed,
+				data.Radius,
+				data.Speed,
+				data.Damage,
 				entity.TeamAlly,
-				color.RGBA{0, 0, 255, 255},
-				color.White,
+				data.ColorIn,
+				data.ColorOut,
+				data.Alpha,
+				data.MaxDuration,
+				data.Resistance,
 			))
 			// If not hand-synced, terminate the other hand's animation
 			//if !p.Core.Synced {
@@ -147,14 +148,14 @@ func (p *Player) Update(ctx *entity.Context) {
 		}
 	}
 	// New states
+	if p.active.Dashing > 0 {
+		p.speedMod = DashingSpeedMod
+	}
 	switch {
-	case p.Active.Dashing > 0:
-		p.SpeedMod = DashingSpeedMod
-		p.Status = dashing
-	case p.Active.Shooting > 0:
-		p.Status = shooting
+	case p.active.Shooting > 0:
+		p.status = shooting
 	default:
-		p.Status = idle
+		p.status = idle
 		if p.RightHand.Anim == nil {
 			p.RightHand.Anim = hand.AnimationIdle.NewInstance(p.RightHand, false)
 		}
@@ -163,12 +164,21 @@ func (p *Player) Update(ctx *entity.Context) {
 		}
 	}
 	// Update animations
-	if p.RightHand.Anim != nil {
-		p.RightHand.Anim.Update(p.RightHand)
+	p.RightHand.Anim.Update(p.RightHand)
+	p.LeftHand.Anim.Update(p.LeftHand)
+}
+
+func (p *Player) TakeHit(dmg float64) {
+	if dmg > 0 && p.active.Invuln <= 0 {
+		// TODO: play sfx
+		p.Core.Health = max(p.Core.Health-dmg, 0)
+		p.active.Invuln = InvulnTicks
+		p.cooldown.Invuln = InvulnCD
 	}
-	if p.LeftHand.Anim != nil {
-		p.LeftHand.Anim.Update(p.LeftHand)
-	}
+}
+
+func (p *Player) Dead() bool {
+	return p.Core.Health <= 0
 }
 
 func (p *Player) DrawHands(screen *ebiten.Image, ctx *graphics.Context) {

@@ -20,7 +20,9 @@ type Entity interface {
 	AppendVerticesIndices(vx []ebiten.Vertex, ix []uint16, index *int, ctx *graphics.Context) ([]ebiten.Vertex, []uint16)
 
 	Team() Team
+	Damage() float64
 	Position() mgl64.Vec3
+	TakeHit(dmg float64)
 	Radius() float64
 	Dead() bool
 }

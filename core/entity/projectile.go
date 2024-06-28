@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"image"
 	"image/color"
 
 	"github.com/Zyko0/Alapae/graphics"
@@ -9,34 +8,51 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-const ProjectileMaxDuration = 5 * 60
-
 type Projectile struct {
-	team   Team
-	pos    mgl64.Vec3
-	dir    mgl64.Vec3
-	clr0   float32
-	clr1   float32
-	radius float64
-	speed  float64
+	team       Team
+	pos        mgl64.Vec3
+	dir        mgl64.Vec3
+	clrIn      float32
+	clrOut     float32
+	alpha      float64
+	radius     float64
+	speed      float64
+	dmg        float64
+	duration   uint
+	resistance uint
 
 	ticks uint
 	dead  bool
 }
 
-func NewProjectile(pos, dir mgl64.Vec3, radius, speed float64, team Team, clr0, clr1 color.Color) *Projectile {
+func NewProjectile(pos, dir mgl64.Vec3, radius, speed, dmg float64, team Team, clrIn, clrOut color.Color, alpha float64, duration, resistance uint) *Projectile {
 	return &Projectile{
-		pos:    pos,
-		dir:    dir,
-		clr0:   graphics.ColorAsFloat32RGB(clr0),
-		clr1:   graphics.ColorAsFloat32RGB(clr1),
-		radius: radius,
-		speed:  speed,
+		team:       team,
+		pos:        pos,
+		dir:        dir,
+		clrIn:      graphics.ColorAsFloat32RGB(clrIn),
+		clrOut:     graphics.ColorAsFloat32RGB(clrOut),
+		alpha:      alpha,
+		radius:     radius,
+		speed:      speed,
+		dmg:        dmg,
+		duration:   duration,
+		resistance: resistance,
 	}
 }
 
 func (p *Projectile) Team() Team {
 	return p.team
+}
+
+func (p *Projectile) Damage() float64 {
+	return p.dmg
+}
+
+func (p *Projectile) TakeHit(_ float64) {
+	if p.resistance > 0 {
+		p.resistance -= 1
+	}
 }
 
 func (p *Projectile) Update(_ *Context) {
@@ -53,16 +69,16 @@ func (p *Projectile) AppendVerticesIndices(vx []ebiten.Vertex, ix []uint16, inde
 	camRight := ctx.CameraRight.Mul(p.radius * graphics.SpriteScale)
 	camUp := ctx.CameraUp.Mul(p.radius * graphics.SpriteScale)
 	// Append vertices and indices if the quad is visible
-	rect := image.Rect(0, 0, int(p.radius), int(p.radius))
 	vi := len(vx)
 	vx, ix = graphics.AppendBillboardVerticesIndices(
-		vx, ix, uint16(*index), rect, p.pos.Sub(ctx.CameraPosition), camRight, camUp, &ctx.ProjView,
+		vx, ix, uint16(*index), p.pos.Sub(ctx.CameraPosition), camRight, camUp, &ctx.ProjView,
 	)
 	*index++
 	for i := 0; i < 4; i++ {
 		vx[vi+i].ColorR = 2 // Bullet hardcoded
-		vx[vi+i].ColorG = p.clr0
-		vx[vi+i].ColorB = p.clr1
+		vx[vi+i].ColorG = p.clrOut
+		vx[vi+i].ColorB = p.clrIn
+		vx[vi+i].ColorA = float32(p.alpha)
 	}
 
 	return vx, ix
@@ -77,5 +93,7 @@ func (p *Projectile) Radius() float64 {
 }
 
 func (p *Projectile) Dead() bool {
-	return p.ticks >= ProjectileMaxDuration || p.pos.Y()-p.radius < -graphics.SpriteScale // TODO: do in collisions check
+	return p.ticks >= p.duration ||
+		p.pos.Y()-p.radius < -graphics.SpriteScale ||
+		p.resistance == 0
 }

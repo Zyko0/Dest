@@ -33,6 +33,12 @@ func (c *Comet) Team() Team {
 	return TeamEnemy
 }
 
+func (c *Comet) Damage() float64 {
+	return 10
+}
+
+func (c *Comet) TakeHit(_ float64) {}
+
 func (c *Comet) Update(_ *Context) {
 	c.position = c.position.Add(mgl64.Vec3{0, -1, 0}.Mul(c.speed)) // TODO:
 	c.ticks++
@@ -106,5 +112,5 @@ func (c *Comet) Radius() float64 {
 }
 
 func (c *Comet) Dead() bool {
-	return c.ticks >= ProjectileMaxDuration || c.position.Y() < -c.radius*12*graphics.SpriteScale
+	return c.ticks >= 5*60 || c.position.Y() < -c.radius*12*graphics.SpriteScale
 }

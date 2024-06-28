@@ -105,7 +105,7 @@ func AppendBillboardUVVerticesIndices(vx []ebiten.Vertex, ix []uint16, index uin
 	return vx, ix
 }
 
-func AppendBillboardVerticesIndices(vx []ebiten.Vertex, ix []uint16, index uint16, rect image.Rectangle, pos, right, up mgl64.Vec3, tf *mgl64.Mat4) ([]ebiten.Vertex, []uint16) {
+func AppendBillboardVerticesIndices(vx []ebiten.Vertex, ix []uint16, index uint16, pos, right, up mgl64.Vec3, tf *mgl64.Mat4) ([]ebiten.Vertex, []uint16) {
 	v0 := pos.Add(right.Mul(quadVertices[0].X())).Add(
 		up.Mul(quadVertices[0].Y()),
 	).Vec4(1)
