@@ -332,7 +332,8 @@ func (s *Stats) Update(ctx *StatsContext) {
 			).(*ebiten.Image),
 		)
 		s.descTitle.Text().SetText(s.hovered.Name())
-		s.descText.Text().SetText(s.hovered.Description())
+		stacks := fmt.Sprintf(" (%d stacks)", s.hovered.Stacks)
+		s.descText.Text().SetText(s.hovered.Description() + stacks)
 	} else {
 		s.descPic.Image().SetImage(emptyImg)
 		s.descTitle.Text().SetText("")
