@@ -3,10 +3,8 @@ package hand
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
-	"github.com/Zyko0/Ebiary/asset"
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -189,31 +187,11 @@ func (a *Animation) NewInstance(hand *Hand, reverted bool) *AnimationInstance {
 	}
 }
 
-var TestAnimation *asset.LiveAsset[*Animation]
-
-func init() {
-	var err error
-
-	TestAnimation, err = asset.NewLiveAssetFunc("assets/animations/run.pose", func(b []byte) (*Animation, error) {
-		a := &Animation{}
-		if err := a.Deserialize(b); err != nil {
-			return nil, err
-		}
-		return a, nil
-	})
-	if err != nil {
-		log.Fatal("animation err: ", err)
-	}
-}
-
 func (a *AnimationInstance) Update(hand *Hand) {
 	if a == nil {
 		return
 	}
-	/*a.animation = TestAnimation.Value() // TODO: tmp
-	if err := TestAnimation.Error(); err != nil {
-		fmt.Println("err:", err)
-	}*/
+
 	var s *HandStep
 	// Lerp
 	idx := a.index

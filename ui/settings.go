@@ -109,7 +109,7 @@ func newSettings() *Settings {
 		),
 	)
 
-	options := ui.NewGrid(4, 4).WithOptions(
+	options := ui.NewGrid(4, 3).WithOptions(
 		opt.Grid.Options(
 			opt.RGB(15, 15, 15),
 			opt.Rounding(15),
@@ -142,15 +142,7 @@ func newSettings() *Settings {
 			opt.Text.PaddingLeft(10),
 		),
 	))
-	/*options.Add(0, 3, 1, 1, uiex.NewLabel("Yes").WithOptions(
-		opt.Label.Text(
-			opt.Text.Color(softWhite),
-			opt.Text.AlignLeft(),
-			opt.Text.Source(assets.FontSource),
-			opt.Text.Size(24),
-			opt.Text.PaddingLeft(10),
-		),
-	))*/
+
 	options.Add(1, 0, 3, 1, newSlider(s.offset, func(t float64) {
 		logic.MouseSensitivity = max(t, 0.01)
 	}, logic.MouseSensitivity))
@@ -162,7 +154,6 @@ func newSettings() *Settings {
 		logic.SFXVolume = t
 		assets.SetSFXVolume(t)
 	}, logic.SFXVolume))
-	//options.Add(1, 3, 3, 1, newSlider(s.offset))
 
 	s.layout.Grid().Add(2, 7, 28, 23, options)
 

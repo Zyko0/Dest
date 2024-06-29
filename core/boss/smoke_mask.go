@@ -46,7 +46,7 @@ func NewSmokeMask(position mgl64.Vec3, stageNum int) *SmokeMask {
 	smokes[8] = mgl64.Vec4{1, 0, -1, 1}
 	smokes[9] = mgl64.Vec4{0, 1, -1, 1}
 
-	hp := float64((stageNum % 2) * 10000)
+	hp := float64((1 + stageNum/2) * 10000)
 	return &SmokeMask{
 		position: position,
 		stance:   entity.StanceIdle,
@@ -62,7 +62,7 @@ func NewSmokeMask(position mgl64.Vec3, stageNum int) *SmokeMask {
 			rand.Float64() - 0.5,
 			rand.Float64() - 0.5,
 		}.Normalize(),
-		// TODO: hp
+
 		health:    hp,
 		maxHealth: hp,
 	}

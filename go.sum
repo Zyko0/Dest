@@ -2,8 +2,6 @@ github.com/Zyko0/Ebiary/asset v0.0.0-20240519201548-c19e60840185 h1:qCIeFpY5HVnS
 github.com/Zyko0/Ebiary/asset v0.0.0-20240519201548-c19e60840185/go.mod h1:4CqqwHRUbvGBpBd5ye4MxDA4k/XtZqrAD1sg9uxmcYI=
 github.com/Zyko0/Ebiary/ui v0.0.0-20240519201548-c19e60840185 h1:OidSPl9PPdd+UvoySGvy9ohVfJvzejf8BlDWviIubw0=
 github.com/Zyko0/Ebiary/ui v0.0.0-20240519201548-c19e60840185/go.mod h1:euYEuTMpnDOEAwu14DZPF+BHVDOBwOOzANm5eR90AMo=
-github.com/dave/jennifer v1.7.0 h1:uRbSBH9UTS64yXbh4FrMHfgfY762RD+C7bUPKODpSJE=
-github.com/dave/jennifer v1.7.0/go.mod h1:nXbxhEmQfOZhWml3D1cDK5M1FLnMSozpbFN/m3RmGZc=
 github.com/ebitengine/gomobile v0.0.0-20240518074828-e86332849895 h1:48bCqKTuD7Z0UovDfvpCn7wZ0GUZ+yosIteNDthn3FU=
 github.com/ebitengine/gomobile v0.0.0-20240518074828-e86332849895/go.mod h1:XZdLv05c5hOZm3fM2NlJ92FyEZjnslcMcNRrhxs8+8M=
 github.com/ebitengine/hideconsole v1.0.0 h1:5J4U0kXF+pv/DhiXt5/lTz0eO5ogJ1iXb8Yj1yReDqE=

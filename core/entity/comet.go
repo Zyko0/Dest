@@ -40,7 +40,7 @@ func (c *Comet) Damage() float64 {
 func (c *Comet) TakeHit(_ float64) {}
 
 func (c *Comet) Update(_ *Context) {
-	c.position = c.position.Add(mgl64.Vec3{0, -1, 0}.Mul(c.speed)) // TODO:
+	c.position = c.position.Add(mgl64.Vec3{0, -1, 0}.Mul(c.speed))
 	c.ticks++
 }
 

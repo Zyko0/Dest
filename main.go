@@ -1,23 +1,17 @@
 package main
 
 import (
-	"fmt"
 	"image"
 	"log"
 
 	"github.com/Zyko0/Alapae/assets"
 	"github.com/Zyko0/Alapae/core"
 	"github.com/Zyko0/Alapae/input"
+	"github.com/Zyko0/Alapae/logic"
 	"github.com/Zyko0/Alapae/ui"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-)
-
-const (
-	ScreenWidth  = 1920
-	ScreenHeight = 1080
 )
 
 type Game struct {
@@ -28,19 +22,18 @@ type Game struct {
 	splash *ui.SplashView
 	stats  *ui.Stats
 
-	//paused  bool
 	updated bool
 }
 
 func New() *Game {
 	return &Game{
-		offscreen: ebiten.NewImage(ScreenWidth, ScreenHeight),
+		offscreen: ebiten.NewImage(logic.ScreenWidth, logic.ScreenHeight),
 		game: core.NewGame(core.NewCamera(
 			mgl64.Vec3{0, 0, 0},
 			mgl64.Vec3{0, 0, 0},
 			45,
-			float64(ScreenWidth)/float64(ScreenHeight),
-		), image.Rect(0, 0, ScreenWidth, ScreenHeight)),
+			float64(logic.ScreenWidth)/float64(logic.ScreenHeight),
+		), image.Rect(0, 0, logic.ScreenWidth, logic.ScreenHeight)),
 		hud: &ui.HUD{},
 
 		splash: ui.NewSplashView(),
@@ -66,8 +59,8 @@ func (g *Game) Update() error {
 			mgl64.Vec3{0, 0, 0},
 			mgl64.Vec3{0, 0, 0},
 			45,
-			float64(ScreenWidth)/float64(ScreenHeight),
-		), image.Rect(0, 0, ScreenWidth, ScreenHeight))
+			float64(logic.ScreenWidth)/float64(logic.ScreenHeight),
+		), image.Rect(0, 0, logic.ScreenWidth, logic.ScreenHeight))
 	}
 	sctx := &ui.StatsContext{
 		Title: "Pause",
@@ -135,19 +128,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.updated = false
 	}
 	screen.DrawImage(g.offscreen, nil)
-
-	// Debug
-	ebitenutil.DebugPrint(
-		screen,
-		fmt.Sprintf("TPS: %0.2f - FPS %.02f",
-			ebiten.ActualTPS(),
-			ebiten.ActualFPS(),
-		),
-	)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return ScreenWidth, ScreenHeight
+	return logic.ScreenWidth, logic.ScreenHeight
 }
 
 func main() {
@@ -155,7 +139,7 @@ func main() {
 	ebiten.SetVsyncEnabled(false)
 	ebiten.SetTPS(core.TPS)
 	ebiten.SetFullscreen(true)
-	ebiten.SetWindowSize(ScreenWidth, ScreenHeight)
+	ebiten.SetWindowSize(logic.ScreenWidth, logic.ScreenHeight)
 	ebiten.SetCursorShape(ebiten.CursorShapeCrosshair)
 
 	assets.SetMusic(assets.MusicMenuShop)

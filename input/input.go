@@ -8,10 +8,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-const (
-	MouseSensitivity = 0.0005
-)
-
 var (
 	inputGiven bool
 	cursorInit bool

@@ -157,7 +157,7 @@ func (*HUD) drawItemTooltip(screen *ebiten.Image, item *building.Item) {
 	for i, c := range item.Curses {
 		// Display up to 8 curses
 		if i >= maxCurses {
-			// TODO: display a "+" to inform that there are more hidden?
+			// Indicate that there are more hidden curses
 			str = fmt.Sprintf("%d more random curses.", len(item.Curses)-8)
 			topts.GeoM.Reset()
 			topts.GeoM.Translate(
@@ -289,9 +289,18 @@ func (hud *HUD) Draw(screen *ebiten.Image, ctx *HUDContext) {
 		opts.ColorScale.Scale(0.8, 0.8, 0.8, 1)
 		text.Draw(screen, str, titleFace, opts)
 	}
-
 	// Item tooltip
 	if ctx.StageKind == core.Building && ctx.TargetItem != nil {
 		hud.drawItemTooltip(screen, ctx.TargetItem)
 	}
+	// Stage number
+	str = fmt.Sprintf("Stage: %d", ctx.Stage)
+	//w, h = text.Measure(str, titleFace, 0)
+	opts.GeoM.Reset()
+	opts.GeoM.Translate(
+		logic.ScreenWidth-256,
+		32,
+	)
+	opts.ColorScale.Scale(0.8, 0.8, 0.8, 1)
+	text.Draw(screen, str, titleFace, opts)
 }

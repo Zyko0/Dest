@@ -77,7 +77,7 @@ func newSubItemGrid(s *Stats) *ui.Grid {
 			)
 		}
 	}
-	// TODO: prepare picture containers
+
 	return g
 }
 
@@ -203,7 +203,6 @@ func NewStats() *Stats {
 	columns.Add(1, 0, 1, 1, allBlock)
 	columns.Add(2, 0, 1, 1, rightBlock)
 	columns.Add(3, 0, 1, 1, s.stats)
-	// TODO: stats block
 
 	// Description box
 	s.descPic = uiex.NewPicture(emptyImg).WithOptions(

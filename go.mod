@@ -10,7 +10,6 @@ require (
 )
 
 require (
-	github.com/dave/jennifer v1.7.0 // indirect
 	github.com/ebitengine/gomobile v0.0.0-20240518074828-e86332849895 // indirect
 	github.com/ebitengine/hideconsole v1.0.0 // indirect
 	github.com/ebitengine/oto/v3 v3.3.0-alpha.1 // indirect
