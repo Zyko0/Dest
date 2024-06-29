@@ -16,7 +16,6 @@ const (
 	defaultMusicVolume = 1.0
 
 	sfxSampleRate = 44100
-	//musicSampleRate = 192000
 )
 
 var (
@@ -56,8 +55,8 @@ var (
 	hitSoundPlayer *audio.Player
 
 	//go:embed audio/sm_shoot.wav
-	smShootSoundBytes  []byte
-	smShootSoundPlayer *audio.Player
+	bossShootSoundBytes  []byte
+	bossShootSoundPlayer *audio.Player
 	//go:embed audio/sm_comet.wav
 	smCometSoundBytes  []byte
 	smCometSoundPlayer *audio.Player
@@ -116,38 +115,38 @@ func init() {
 	dashSoundPlayer = newSFXPlayer(dashSoundBytes)
 	dashSoundPlayer.SetVolume(0.5)
 	hitSoundPlayer = newSFXPlayer(hitSoundBytes)
-	//hitSoundPlayer.SetVolume(0.5)
 
-	smShootSoundPlayer = newSFXPlayer(smShootSoundBytes)
+	bossShootSoundPlayer = newSFXPlayer(bossShootSoundBytes)
 	smCometSoundPlayer = newSFXPlayer(smCometSoundBytes)
 	bossChargeSoundPlayer = newSFXPlayer(bossChargeSoundBytes)
 	bonusSoundPlayer = newSFXPlayer(bonusSoundBytes)
 	bonusSoundPlayer.SetVolume(0.5)
 	portalSoundPlayer = newSFXPlayer(portalSoundBytes)
-	portalSoundPlayer.SetVolume(0.5)
 
 	boss0MusicPlayer = newMusicPlayer(boss0MusicBytes)
 	menuMusicPlayer = newMusicPlayer(menuMusicBytes)
 }
 
-// Musics
+// Volume
 
-/*func ReplayGameMusic() {
-	gameMusicPlayer.Rewind()
-	gameMusicPlayer.Play()
+func SetMusicVolume(v float64) {
+	boss0MusicPlayer.SetVolume(v)
+	menuMusicPlayer.SetVolume(v)
 }
 
-func StopGameMusic() {
-	if gameMusicPlayer.IsPlaying() {
-		gameMusicPlayer.Pause()
+func SetSFXVolume(v float64) {
+	for _, p := range shootPlayers {
+		p.SetVolume(v * 0.4)
 	}
+	missSoundPlayer.SetVolume(v)
+	dashSoundPlayer.SetVolume(v * 0.5)
+	hitSoundPlayer.SetVolume(v)
+	bossShootSoundPlayer.SetVolume(v)
+	smCometSoundPlayer.SetVolume(v)
+	bossChargeSoundPlayer.SetVolume(v)
+	bonusSoundPlayer.SetVolume(v * 0.5)
+	portalSoundPlayer.SetVolume(v)
 }
-
-func ResumeGameMusic() {
-	if !gameMusicPlayer.IsPlaying() {
-		gameMusicPlayer.Play()
-	}
-}*/
 
 // Sfx
 
@@ -173,8 +172,8 @@ func PlayHit() {
 }
 
 func PlayBossShoot() {
-	smShootSoundPlayer.Rewind()
-	smShootSoundPlayer.Play()
+	bossShootSoundPlayer.Rewind()
+	bossShootSoundPlayer.Play()
 }
 
 func PlayBossComet() {
@@ -201,6 +200,7 @@ func PlayPortal() {
 
 func PlayMusic() {
 	if music != nil && !music.IsPlaying() {
+		music.Rewind()
 		music.Play()
 	}
 }
@@ -214,13 +214,13 @@ func PauseMusic() {
 type Music byte
 
 const (
-	MusicMenu Music = iota
+	MusicMenuShop Music = iota
 	MusicBoss0
 )
 
 func SetMusic(m Music) {
 	switch m {
-	case MusicMenu:
+	case MusicMenuShop:
 		PauseMusic()
 		music = menuMusicPlayer
 	case MusicBoss0:

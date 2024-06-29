@@ -121,6 +121,8 @@ func (g *Game) initStage() {
 			g.Player.Core.Health+g.Player.Core.HealthPerStage,
 			g.Player.Core.MaxHealth,
 		)
+		assets.SetMusic(assets.MusicMenuShop)
+		assets.PlayMusic()
 		return
 	}
 	b := boss.NewSmokeMask(mgl64.Vec3{
@@ -137,6 +139,8 @@ func (g *Game) initStage() {
 		logic.ArenaSize - graphics.SpriteScale,
 	})
 	g.camera.SetYawPitch(2.5, 0)
+	assets.SetMusic(assets.MusicBoss0)
+	assets.PlayMusic()
 }
 
 func (g *Game) nextStage() {

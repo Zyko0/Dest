@@ -238,7 +238,7 @@ type HandModifiers struct {
 
 func (hm *HandModifiers) reset() {
 	hm.Weapon = hand.WeaponFinger
-	hm.Damage = 5
+	hm.Damage = 5*1000
 	hm.CritChance = 0.05
 	hm.CritDamage = 2
 	hm.Accuracy = 1

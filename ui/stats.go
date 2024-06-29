@@ -15,7 +15,10 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var emptyImg = ebiten.NewImage(3, 3)
+var (
+	emptyImg  = ebiten.NewImage(3, 3)
+	softWhite = color.RGBA{220, 220, 220, 255}
+)
 
 type Stats struct {
 	layout *ui.Layout
@@ -34,6 +37,10 @@ type Stats struct {
 	descText  *uiex.Label
 
 	hovered *building.Mod
+
+	Active      bool
+	Settings    *Settings
+	RestartGame bool
 }
 
 func newSubItemGrid(s *Stats) *ui.Grid {
@@ -80,29 +87,84 @@ func newItemGrid(subGrid0, subGrid1 *ui.Grid) *ui.Grid {
 	g.Add(0, 1, 1, 1, subGrid1)
 	g.WithOptions(opt.Grid.Options(
 		opt.Padding(2),
+		opt.RGB(5, 5, 5),
 	))
 
 	return g
 }
 
 func NewStats() *Stats {
-	s := &Stats{}
+	s := &Stats{
+		Settings: newSettings(),
+	}
 	s.layout = ui.NewLayout(32, 18, image.Rectangle{})
 	s.layout.SetDimensions(
 		logic.ScreenWidth*8/10,
 		logic.ScreenHeight*8/10,
 	)
 	s.layout.Grid().WithOptions(opt.Grid.Options(
-		opt.RGB(0, 0, 0),
+		opt.RGB(5, 5, 5),
 		opt.Rounding(32),
 	))
-	s.title = uiex.NewLabel("Game over").WithOptions(
+	s.title = uiex.NewLabel("").WithOptions(
 		opt.Label.Text(
 			opt.Text.AlignCenterX(),
-			opt.Text.AlignTop(),
-			opt.Text.Color(color.White),
+			opt.Text.AlignCenterY(),
+			opt.Text.Color(softWhite),
 			opt.Text.Source(assets.FontSource),
 			opt.Text.Size(48),
+		),
+	)
+	settings := uiex.NewButtonText("Settings (Esc)").WithOptions(
+		opt.ButtonText.Text(
+			opt.Text.AlignCenter(),
+			opt.Text.Color(softWhite),
+			opt.Text.Source(assets.FontSource),
+			opt.Text.Size(24),
+		),
+		opt.ButtonText.Options(
+			opt.Shape(ui.ShapeBox),
+			opt.RGB(40, 40, 40),
+			opt.Rounding(15),
+			opt.Margin(20),
+			opt.EventStyle(ui.EventOptions{
+				ui.Default:      opt.Border(0, color.White),
+				ui.Hover:        opt.BorderWidth(2),
+				ui.PressHover:   opt.DoEvent(ui.Hover),
+				ui.JustPress:    opt.DoEvent(ui.Hover),
+				ui.ReleaseHover: opt.DoEvent(ui.Hover),
+			}),
+			opt.EventAction(ui.EventOptions{
+				ui.ReleaseHover: func(ui.Item) {
+					s.Settings.active = true
+				},
+			}),
+		),
+	)
+	restart := uiex.NewButtonText("Restart (R)").WithOptions(
+		opt.ButtonText.Text(
+			opt.Text.AlignCenter(),
+			opt.Text.Color(softWhite),
+			opt.Text.Source(assets.FontSource),
+			opt.Text.Size(24),
+		),
+		opt.ButtonText.Options(
+			opt.Shape(ui.ShapeBox),
+			opt.RGB(40, 40, 40),
+			opt.Rounding(15),
+			opt.Margin(20),
+			opt.EventStyle(ui.EventOptions{
+				ui.Default:      opt.Border(0, color.White),
+				ui.Hover:        opt.BorderWidth(2),
+				ui.PressHover:   opt.DoEvent(ui.Hover),
+				ui.JustPress:    opt.DoEvent(ui.Hover),
+				ui.ReleaseHover: opt.DoEvent(ui.Hover),
+			}),
+			opt.EventAction(ui.EventOptions{
+				ui.ReleaseHover: func(ui.Item) {
+					s.RestartGame = true
+				},
+			}),
 		),
 	)
 	columns := ui.NewGrid(4, 1).WithOptions(opt.Grid.Options(
@@ -128,6 +190,12 @@ func NewStats() *Stats {
 			opt.RichText.LineSpacing(24),
 			opt.RichText.Align(ui.AlignMin, ui.AlignMin),
 			opt.RichText.PaddingLeft(20),
+		),
+		opt.Label.Options(
+			opt.Shape(ui.ShapeBox),
+			opt.Rounding(15),
+			opt.Padding(4),
+			opt.RGB(15, 15, 15),
 		),
 	)
 
@@ -158,21 +226,13 @@ func NewStats() *Stats {
 		),
 	)
 
-	s.layout.Grid().Add(
-		12, 0, 8, 2, s.title,
-	)
-	s.layout.Grid().Add(
-		1, 2, 30, 12, columns,
-	)
-	s.layout.Grid().Add(
-		1, 15, 2, 2, s.descPic,
-	)
-	s.layout.Grid().Add(
-		4, 15, 8, 1, s.descTitle,
-	)
-	s.layout.Grid().Add(
-		4, 16, 26, 1, s.descText,
-	)
+	s.layout.Grid().Add(12, 0, 8, 2, s.title)
+	s.layout.Grid().Add(1, 0, 5, 2, settings)
+	s.layout.Grid().Add(6, 0, 4, 2, restart)
+	s.layout.Grid().Add(1, 2, 30, 12, columns)
+	s.layout.Grid().Add(1, 15, 2, 2, s.descPic)
+	s.layout.Grid().Add(4, 15, 8, 1, s.descTitle)
+	s.layout.Grid().Add(4, 16, 26, 1, s.descText)
 
 	return s
 }
@@ -204,22 +264,30 @@ type StatsContext struct {
 func appendStatName(rt *uiex.RichText, name string) {
 	rt.PushColorFg(color.RGBA{255, 200, 0, 255})
 	rt.PushBold()
-	rt.Append("\n" + name + "\n\n")
+	rt.Append(name + "\n\n")
 	rt.Pop()
 	rt.Pop()
 }
 
 func appendStat(rt *uiex.RichText, name, value string) {
-	rt.PushColorFg(color.White)
+	rt.PushColorFg(softWhite)
 	rt.Append(name)
 	rt.Pop()
-	rt.PushColorFg(color.RGBA{0, 255, 0, 255})
+	rt.PushColorFg(color.RGBA{0, 220, 0, 255})
 	rt.Append(value + "\n")
 	rt.Pop()
 }
 
 func (s *Stats) Update(ctx *StatsContext) {
+	if s.Settings.active {
+		s.Settings.Update()
+		return
+	}
+
 	s.hovered = nil
+	s.Settings.active = false
+	s.RestartGame = false
+	s.title.Text().SetText(ctx.Title)
 	// Update items
 	s.setItems(s.left, ctx.Build.Hand(hand.Left).Bonuses)
 	s.setItems(s.leftCurses, ctx.Build.Hand(hand.Left).Curses)
@@ -242,17 +310,19 @@ func (s *Stats) Update(ctx *StatsContext) {
 	appendStat(rt, "Attack speed: ", fmt.Sprintf("%+.1f%%", float64(ctx.Build.AttackSpeedStacks)*12.5))
 	appendStat(rt, "Luck: ", fmt.Sprintf("%+.1f%%", ctx.Build.Luck*100))
 	appendStat(rt, "Heal per stage: ", fmt.Sprintf("%+.0f", ctx.Build.HealthPerStage))
-	appendStatName(rt, "Left")
+	appendStatName(rt, "\nLeft")
 	appendStat(rt, "Damage: ", fmt.Sprintf("%+.1f", ctx.Build.Hand(hand.Left).Damage))
 	appendStat(rt, "Critical chance: ", fmt.Sprintf("%+.0f%%", ctx.Build.Hand(hand.Left).CritChance*100))
 	appendStat(rt, "Critical damage: ", fmt.Sprintf("%+.0f%%", ctx.Build.Hand(hand.Left).CritDamage*100))
 	appendStat(rt, "Accuracy: ", fmt.Sprintf("%.0f%%", ctx.Build.Hand(hand.Left).Accuracy*100))
+	appendStat(rt, "Projectile count: ", fmt.Sprintf("%d", ctx.Build.Hand(hand.Left).ProjectileCount))
 	appendStat(rt, "Projectile speed: ", fmt.Sprintf("%+.0f%%", ctx.Build.Hand(hand.Left).ProjectileSpeed*100))
-	appendStatName(rt, "Right")
+	appendStatName(rt, "\nRight")
 	appendStat(rt, "Damage: ", fmt.Sprintf("%+.1f", ctx.Build.Hand(hand.Right).Damage))
 	appendStat(rt, "Critical chance: ", fmt.Sprintf("%+.0f%%", ctx.Build.Hand(hand.Right).CritChance*100))
 	appendStat(rt, "Critical damage: ", fmt.Sprintf("%+.0f%%", ctx.Build.Hand(hand.Right).CritDamage*100))
 	appendStat(rt, "Accuracy: ", fmt.Sprintf("%.0f%%", ctx.Build.Hand(hand.Right).Accuracy*100))
+	appendStat(rt, "Projectile count: ", fmt.Sprintf("%d", ctx.Build.Hand(hand.Right).ProjectileCount))
 	appendStat(rt, "Projectile speed: ", fmt.Sprintf("%+.0f%%", ctx.Build.Hand(hand.Right).ProjectileSpeed*100))
 
 	// Update description box if necessary
@@ -272,5 +342,21 @@ func (s *Stats) Update(ctx *StatsContext) {
 }
 
 func (s *Stats) Draw(screen *ebiten.Image) {
+	if s.Settings.active {
+		s.Settings.Draw(screen)
+		return
+	}
 	s.layout.Draw(screen)
+}
+
+func (s *Stats) Enable() {
+	s.Active = true
+	s.RestartGame = false
+	s.Settings.active = false
+}
+
+func (s *Stats) Disable() {
+	s.Active = false
+	s.RestartGame = false
+	s.Settings.active = false
 }

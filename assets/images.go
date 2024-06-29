@@ -19,7 +19,10 @@ var (
 	fsImg embed.FS
 
 	// Item sprites
-	ItemSheetImage *ebiten.Image // TODO: load
+	ItemSheetImage *ebiten.Image
+
+	// Splash
+	SplashImage *ebiten.Image
 
 	// Mask Boss
 	MaskSheetImage    *ebiten.Image
@@ -55,4 +58,11 @@ func init() {
 		log.Fatal("err: ", err)
 	}
 	ItemSheetImage = ebiten.NewImageFromImage(img)
+
+	b, _ = fsImg.ReadFile("images/splash_1920x1080_black.png")
+	img, err = png.Decode(bytes.NewReader(b))
+	if err != nil {
+		log.Fatal("err: ", err)
+	}
+	SplashImage = ebiten.NewImageFromImage(img)
 }

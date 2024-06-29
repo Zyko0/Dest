@@ -20,16 +20,13 @@ const (
 	ScreenHeight = 1080
 )
 
-var (
-	PlayerSize = mgl64.Vec3{1, 2, 1}
-	Grounded   bool
-)
-
 type Game struct {
 	offscreen *ebiten.Image
 	game      *core.Game
 	hud       *ui.HUD
-	stats     *ui.Stats
+
+	splash *ui.SplashView
+	stats  *ui.Stats
 
 	paused  bool
 	updated bool
@@ -44,8 +41,10 @@ func New() *Game {
 			45,
 			float64(ScreenWidth)/float64(ScreenHeight),
 		), image.Rect(0, 0, ScreenWidth, ScreenHeight)),
-		hud:   &ui.HUD{},
-		stats: ui.NewStats(),
+		hud: &ui.HUD{},
+
+		splash: ui.NewSplashView(),
+		stats:  ui.NewStats(),
 	}
 }
 
@@ -55,34 +54,49 @@ func (g *Game) Update() error {
 		return ebiten.Termination
 	}
 
-	// Pause
-	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
-		g.paused = !g.paused
-	}
-	if g.paused {
-		input.SetLastCursor(ebiten.CursorPosition())
-		ebiten.SetCursorMode(ebiten.CursorModeVisible)
-		sctx := &ui.StatsContext{
-			Title: "Pause",
-			Build: g.game.Player.Core,
-		}
-		g.stats.Update(sctx)
+	if g.splash.Active() {
+		g.splash.Update()
 		g.updated = true
 		return nil
 	}
-	if !input.EnsureCursorCaptured() {
-		// TODO: don't treat input instead of returning here, but keep the
-		// game running
-		return nil
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
-		// TODO: make this less brutal
+	if g.stats.RestartGame || inpututil.IsKeyJustPressed(ebiten.KeyR) {
+		g.paused = false
+		g.stats.Disable()
 		g.game = core.NewGame(core.NewCamera(
 			mgl64.Vec3{0, 0, 0},
 			mgl64.Vec3{0, 0, 0},
 			45,
 			float64(ScreenWidth)/float64(ScreenHeight),
 		), image.Rect(0, 0, ScreenWidth, ScreenHeight))
+	}
+	sctx := &ui.StatsContext{
+		Title: "Pause",
+		Build: g.game.Player.Core,
+	}
+	if g.game.Player.Dead() {
+		g.stats.Enable()
+		g.paused = false
+		sctx.Title = "Game over"
+	} else if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
+		g.paused = !g.paused
+		if g.paused {
+			g.stats.Enable()
+		} else {
+			g.stats.Disable()
+		}
+	}
+	if g.stats.Active {
+		input.SetLastCursor(ebiten.CursorPosition())
+		ebiten.SetCursorMode(ebiten.CursorModeVisible)
+		g.stats.Update(sctx)
+		g.updated = true
+		return nil
+	}
+
+	if !input.EnsureCursorCaptured() {
+		// TODO: don't treat input instead of returning here, but keep the
+		// game running
+		return nil
 	}
 
 	g.game.Update()
@@ -93,28 +107,33 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	if g.updated {
-		if g.paused {
-			g.stats.Draw(g.offscreen)
-		} else {
-			g.game.Draw(g.offscreen)
-			// HUD
-			hudCtx := &ui.HUDContext{
-				Stage:       g.game.StageNumber(),
-				StageKind:   g.game.Stage(),
-				PlayerHP:    g.game.Player.Core.Health,
-				PlayerMaxHP: g.game.Player.Core.MaxHealth,
-			}
-			switch hudCtx.StageKind {
-			case core.Building:
-				if g.game.Building.Target != nil {
-					hudCtx.TargetItem = g.game.Building.Target.Item
-				}
-			case core.BossFight:
-				hudCtx.BossHP = g.game.Boss.Health()
-				hudCtx.BossMaxHP = g.game.Boss.MaxHealth()
-			}
-			g.hud.Draw(g.offscreen, hudCtx)
+		g.game.Draw(g.offscreen)
+		// HUD
+		hudCtx := &ui.HUDContext{
+			Stage:       g.game.StageNumber(),
+			StageKind:   g.game.Stage(),
+			PlayerHP:    g.game.Player.Core.Health,
+			PlayerMaxHP: g.game.Player.Core.MaxHealth,
 		}
+		switch hudCtx.StageKind {
+		case core.Building:
+			if g.game.Building.Target != nil {
+				hudCtx.TargetItem = g.game.Building.Target.Item
+			}
+		case core.BossFight:
+			hudCtx.BossHP = g.game.Boss.Health()
+			hudCtx.BossMaxHP = g.game.Boss.MaxHealth()
+		}
+		g.hud.Draw(g.offscreen, hudCtx)
+		// Stats menu
+		if g.stats.Active {
+			g.stats.Draw(g.offscreen)
+		}
+		// Splash screen
+		if g.splash.Active() {
+			g.splash.Draw(g.offscreen)
+		}
+		// Mark as drawn
 		g.updated = false
 	}
 	screen.DrawImage(g.offscreen, nil)
@@ -140,7 +159,8 @@ func main() {
 	ebiten.SetFullscreen(true)
 	ebiten.SetWindowSize(ScreenWidth, ScreenHeight)
 	ebiten.SetCursorShape(ebiten.CursorShapeCrosshair)
-	assets.SetMusic(assets.MusicMenu)
+
+	assets.SetMusic(assets.MusicMenuShop)
 	assets.PlayMusic()
 	if err := ebiten.RunGameWithOptions(New(), &ebiten.RunGameOptions{
 		GraphicsLibrary: ebiten.GraphicsLibraryOpenGL,
