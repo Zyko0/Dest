@@ -4,9 +4,9 @@ import (
 	"math"
 	"math/rand"
 
-	"github.com/Zyko0/Alapae/core/boss/pattern"
-	"github.com/Zyko0/Alapae/core/entity"
-	"github.com/Zyko0/Alapae/logic"
+	"github.com/Zyko0/Dest/core/boss/pattern"
+	"github.com/Zyko0/Dest/core/entity"
+	"github.com/Zyko0/Dest/logic"
 	"github.com/go-gl/mathgl/mgl64"
 )
 

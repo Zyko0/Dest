@@ -3,7 +3,7 @@ package hand
 import (
 	"log"
 
-	"github.com/Zyko0/Alapae/assets"
+	"github.com/Zyko0/Dest/assets"
 )
 
 var (

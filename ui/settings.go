@@ -3,9 +3,9 @@ package ui
 import (
 	"image"
 
-	"github.com/Zyko0/Alapae/assets"
-	"github.com/Zyko0/Alapae/graphics"
-	"github.com/Zyko0/Alapae/logic"
+	"github.com/Zyko0/Dest/assets"
+	"github.com/Zyko0/Dest/graphics"
+	"github.com/Zyko0/Dest/logic"
 	"github.com/Zyko0/Ebiary/ui"
 	"github.com/Zyko0/Ebiary/ui/opt"
 	"github.com/Zyko0/Ebiary/ui/uiex"

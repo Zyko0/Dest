@@ -3,7 +3,7 @@ package input
 import (
 	"runtime"
 
-	"github.com/Zyko0/Alapae/logic"
+	"github.com/Zyko0/Dest/logic"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -46,7 +46,7 @@ func ProcessMouseMovement() (float64, float64) {
 	}
 	lcx, lcy = cx, cy
 
-	sens := logic.MouseSensitivity/1000
+	sens := logic.MouseSensitivity / 1000
 	x := float64(xoff) * sens
 	y := float64(yoff) * sens
 

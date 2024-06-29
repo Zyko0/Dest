@@ -1,6 +1,6 @@
 package pattern
 
-import "github.com/Zyko0/Alapae/core/entity"
+import "github.com/Zyko0/Dest/core/entity"
 
 type Delay struct {
 	ticks    uint

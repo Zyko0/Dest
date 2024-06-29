@@ -1,8 +1,8 @@
 package core
 
 import (
-	"github.com/Zyko0/Alapae/assets"
-	"github.com/Zyko0/Alapae/core/aoe"
+	"github.com/Zyko0/Dest/assets"
+	"github.com/Zyko0/Dest/core/aoe"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 

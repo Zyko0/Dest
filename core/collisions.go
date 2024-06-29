@@ -1,8 +1,8 @@
 package core
 
 import (
-	"github.com/Zyko0/Alapae/core/entity"
-	"github.com/Zyko0/Alapae/graphics"
+	"github.com/Zyko0/Dest/core/entity"
+	"github.com/Zyko0/Dest/graphics"
 )
 
 func (g *Game) handleCollisions() {

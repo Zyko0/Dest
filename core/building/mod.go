@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"slices"
 
-	"github.com/Zyko0/Alapae/core/hand"
+	"github.com/Zyko0/Dest/core/hand"
 )
 
 type Mod struct {

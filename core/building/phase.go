@@ -4,11 +4,11 @@ import (
 	"math/rand"
 	"slices"
 
-	"github.com/Zyko0/Alapae/core/aoe"
-	"github.com/Zyko0/Alapae/core/entity"
-	"github.com/Zyko0/Alapae/core/hand"
-	"github.com/Zyko0/Alapae/graphics"
-	"github.com/Zyko0/Alapae/logic"
+	"github.com/Zyko0/Dest/core/aoe"
+	"github.com/Zyko0/Dest/core/entity"
+	"github.com/Zyko0/Dest/core/hand"
+	"github.com/Zyko0/Dest/graphics"
+	"github.com/Zyko0/Dest/logic"
 	"github.com/go-gl/mathgl/mgl64"
 )
 

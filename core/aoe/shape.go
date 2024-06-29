@@ -3,7 +3,7 @@ package aoe
 import (
 	"math"
 
-	"github.com/Zyko0/Alapae/graphics"
+	"github.com/Zyko0/Dest/graphics"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -144,6 +144,6 @@ func (cb *CircleBorder) AppendVerticesIndices(vx []ebiten.Vertex, ix []uint16, i
 		A:         0,
 	})
 	*index++
-	
+
 	return vx, ix
 }

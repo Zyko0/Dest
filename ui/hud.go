@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Zyko0/Alapae/assets"
-	"github.com/Zyko0/Alapae/core"
-	"github.com/Zyko0/Alapae/core/building"
-	"github.com/Zyko0/Alapae/graphics"
-	"github.com/Zyko0/Alapae/logic"
+	"github.com/Zyko0/Dest/assets"
+	"github.com/Zyko0/Dest/core"
+	"github.com/Zyko0/Dest/core/building"
+	"github.com/Zyko0/Dest/graphics"
+	"github.com/Zyko0/Dest/logic"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )

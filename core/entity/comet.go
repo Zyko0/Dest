@@ -4,8 +4,8 @@ import (
 	"math"
 	"math/rand"
 
-	"github.com/Zyko0/Alapae/assets"
-	"github.com/Zyko0/Alapae/graphics"
+	"github.com/Zyko0/Dest/assets"
+	"github.com/Zyko0/Dest/graphics"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/hajimehoshi/ebiten/v2"
 )

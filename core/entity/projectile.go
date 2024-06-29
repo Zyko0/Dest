@@ -3,7 +3,7 @@ package entity
 import (
 	"image/color"
 
-	"github.com/Zyko0/Alapae/graphics"
+	"github.com/Zyko0/Dest/graphics"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/hajimehoshi/ebiten/v2"
 )

@@ -1,9 +1,9 @@
 package entity
 
 import (
-	"github.com/Zyko0/Alapae/core/aoe"
-	"github.com/Zyko0/Alapae/graphics"
-	"github.com/Zyko0/Alapae/logic"
+	"github.com/Zyko0/Dest/core/aoe"
+	"github.com/Zyko0/Dest/graphics"
+	"github.com/Zyko0/Dest/logic"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/hajimehoshi/ebiten/v2"
 )

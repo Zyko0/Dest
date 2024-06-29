@@ -1,8 +1,8 @@
 package building
 
 import (
-	"github.com/Zyko0/Alapae/core/entity"
-	"github.com/Zyko0/Alapae/graphics"
+	"github.com/Zyko0/Dest/core/entity"
+	"github.com/Zyko0/Dest/graphics"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/hajimehoshi/ebiten/v2"
 )

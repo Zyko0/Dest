@@ -1,4 +1,4 @@
-module github.com/Zyko0/Alapae
+module github.com/Zyko0/Dest
 
 go 1.21.1
 

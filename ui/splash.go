@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"github.com/Zyko0/Alapae/assets"
+	"github.com/Zyko0/Dest/assets"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )

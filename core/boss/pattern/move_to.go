@@ -3,10 +3,10 @@ package pattern
 import (
 	"math"
 
-	"github.com/Zyko0/Alapae/assets"
-	"github.com/Zyko0/Alapae/core/aoe"
-	"github.com/Zyko0/Alapae/core/entity"
-	"github.com/Zyko0/Alapae/graphics"
+	"github.com/Zyko0/Dest/assets"
+	"github.com/Zyko0/Dest/core/aoe"
+	"github.com/Zyko0/Dest/core/entity"
+	"github.com/Zyko0/Dest/graphics"
 	"github.com/go-gl/mathgl/mgl64"
 )
 
