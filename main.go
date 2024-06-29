@@ -42,11 +42,6 @@ func New() *Game {
 }
 
 func (g *Game) Update() error {
-	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
-		// TODO: remove
-		return ebiten.Termination
-	}
-
 	if g.splash.Active() {
 		g.splash.Update()
 		g.updated = true
@@ -135,8 +130,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func main() {
-	// Note: Force opengl
-	ebiten.SetVsyncEnabled(false)
+	ebiten.SetVsyncEnabled(true)
 	ebiten.SetTPS(core.TPS)
 	ebiten.SetFullscreen(true)
 	ebiten.SetWindowSize(logic.ScreenWidth, logic.ScreenHeight)
