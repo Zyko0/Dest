@@ -129,7 +129,7 @@ func (g *Game) initStage() {
 		logic.ArenaSize - graphics.SpriteScale,
 		graphics.SpriteScale,
 		graphics.SpriteScale,
-	})
+	}, g.StageNumber())
 	g.Boss = b
 	g.entities = append(g.entities, b)
 	g.portal.Deactivate()
@@ -157,39 +157,6 @@ func (g *Game) StageSheetImage() *ebiten.Image {
 }
 
 func (g *Game) Update() {
-	// TODO: Debug
-	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		//g.floor.AddMarker(aoe.NewMarker(
-		/*&aoe.Circle{
-			X:      ArenaSize / 2,
-			Y:      ArenaSize / 2,
-			Radius: 45,
-		},*/
-		/*&aoe.XCross{
-			Size:         ArenaSize,
-			Radius:       0.25,
-			Rotation:     0,
-			RotationIncr: 0.025,
-		},*/
-		/*&aoe.Arrow{
-			X:        ArenaSize / 2,
-			Y:        ArenaSize / 2,
-			Size:     50,
-			Rotation: 0,
-		},*/
-		/*&aoe.CircleBorder{
-				X:      ArenaSize / 2,
-				Y:      ArenaSize / 2,
-				Radius: 45,
-			},
-			60, 120000,
-		))*/
-	}
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		//g.nextStage()
-	}
-	// End debug
-
 	// Inputs and camera
 	g.processInput()
 	g.camera.Update()

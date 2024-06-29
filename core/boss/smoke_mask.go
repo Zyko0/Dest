@@ -29,7 +29,7 @@ type SmokeMask struct {
 	maxHealth float64
 }
 
-func NewSmokeMask(position mgl64.Vec3) *SmokeMask {
+func NewSmokeMask(position mgl64.Vec3, stageNum int) *SmokeMask {
 	const (
 		particles = 10
 	)
@@ -46,6 +46,7 @@ func NewSmokeMask(position mgl64.Vec3) *SmokeMask {
 	smokes[8] = mgl64.Vec4{1, 0, -1, 1}
 	smokes[9] = mgl64.Vec4{0, 1, -1, 1}
 
+	hp := float64((stageNum % 2) * 10000)
 	return &SmokeMask{
 		position: position,
 		stance:   entity.StanceIdle,
@@ -62,8 +63,8 @@ func NewSmokeMask(position mgl64.Vec3) *SmokeMask {
 			rand.Float64() - 0.5,
 		}.Normalize(),
 		// TODO: hp
-		health:    10000,
-		maxHealth: 10000,
+		health:    hp,
+		maxHealth: hp,
 	}
 }
 

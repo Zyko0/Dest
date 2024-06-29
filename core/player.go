@@ -74,7 +74,6 @@ func newPlayer() *Player {
 
 func (p *Player) resetModifiers() {
 	p.speedMod = 1
-	// TODO: ?
 }
 
 func (p *Player) Update(ctx *entity.Context) {
@@ -109,10 +108,6 @@ func (p *Player) Update(ctx *entity.Context) {
 			assets.PlayDash()
 		}
 	}
-	// Hand animation test // TODO:
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-
-	}
 
 	// Update current effects
 	p.active.Update()
@@ -139,7 +134,6 @@ func (p *Player) Update(ctx *entity.Context) {
 				data := p.Core.Projectile(h.Side)
 				if data.Miss {
 					assets.PlayMiss()
-					// TODO: play animation (?)
 					continue
 				}
 				var extra mgl64.Vec3
@@ -192,7 +186,6 @@ func (p *Player) Update(ctx *entity.Context) {
 
 func (p *Player) TakeHit(dmg float64) {
 	if dmg > 0 && p.active.Invuln <= 0 {
-		// TODO: play sfx
 		p.Core.Health = max(p.Core.Health-dmg, 0)
 		p.active.Invuln = InvulnTicks
 		p.cooldown.Invuln = InvulnCD
@@ -210,6 +203,9 @@ func (p *Player) DrawHands(screen *ebiten.Image, ctx *graphics.Context) {
 		yoff = size / 8
 	)
 	// Right
+	skin := float32(len(p.Core.Hand(hand.Right).Bonuses))
+	skin += float32(len(p.Core.Hand(hand.Right).Curses))
+	skin /= 20
 	vx, ix := graphics.AppendRectVerticesIndices(nil, nil, 0, &graphics.RectOpts{
 		DstX:      float32(screen.Bounds().Dx()) / 2,
 		DstY:      float32(screen.Bounds().Dy()) - size - yoff,
@@ -220,8 +216,8 @@ func (p *Player) DrawHands(screen *ebiten.Image, ctx *graphics.Context) {
 		SrcWidth:  2,
 		SrcHeight: 2,
 		R:         p.RightHand.Glow,
-		G:         0,
-		B:         0,
+		G:         skin,
+		B:         min(float32(p.Core.Hand(hand.Right).CritChance), 1),
 		A:         0,
 	})
 	var data []float32
@@ -237,6 +233,9 @@ func (p *Player) DrawHands(screen *ebiten.Image, ctx *graphics.Context) {
 		},
 	})
 	// Left
+	skin = float32(len(p.Core.Hand(hand.Left).Bonuses))
+	skin += float32(len(p.Core.Hand(hand.Left).Curses))
+	skin /= 20
 	vx, ix = graphics.AppendRectVerticesIndices(vx[:0], ix[:0], 0, &graphics.RectOpts{
 		DstX:      float32(screen.Bounds().Dx())/2 - size,
 		DstY:      float32(screen.Bounds().Dy()) - size - yoff,
@@ -247,8 +246,8 @@ func (p *Player) DrawHands(screen *ebiten.Image, ctx *graphics.Context) {
 		SrcWidth:  -2,
 		SrcHeight: 2,
 		R:         p.LeftHand.Glow,
-		G:         0,
-		B:         0,
+		G:         skin,
+		B:         min(float32(p.Core.Hand(hand.Left).CritChance), 1),
 		A:         0,
 	})
 	data = p.LeftHand.AppendData(data[:0])
