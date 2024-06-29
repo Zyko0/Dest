@@ -10,6 +10,7 @@ import (
 	"github.com/Zyko0/Ebiary/ui/opt"
 	"github.com/Zyko0/Ebiary/ui/uiex"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 type sliderBar struct {
@@ -141,7 +142,7 @@ func newSettings() *Settings {
 			opt.Text.PaddingLeft(10),
 		),
 	))
-	options.Add(0, 3, 1, 1, uiex.NewLabel("Yes").WithOptions(
+	/*options.Add(0, 3, 1, 1, uiex.NewLabel("Yes").WithOptions(
 		opt.Label.Text(
 			opt.Text.Color(softWhite),
 			opt.Text.AlignLeft(),
@@ -149,7 +150,7 @@ func newSettings() *Settings {
 			opt.Text.Size(24),
 			opt.Text.PaddingLeft(10),
 		),
-	))
+	))*/
 	options.Add(1, 0, 3, 1, newSlider(s.offset, func(t float64) {
 		logic.MouseSensitivity = max(t, 0.01)
 	}, logic.MouseSensitivity))
@@ -169,6 +170,10 @@ func newSettings() *Settings {
 }
 
 func (s *Settings) Update() {
+	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
+		s.active = false
+		return
+	}
 	// Update layout
 	s.layout.Update(s.offset, ui.GetInputState())
 }

@@ -46,7 +46,7 @@ func (*HUD) drawItemTooltip(screen *ebiten.Image, item *building.Item) {
 		itemCardWidth    = 768
 		itemCardHeight   = 256
 		cursesCardWidth  = 512
-		cursesCardHeight = 768
+		cursesCardHeight = 832
 	)
 
 	// Item card
@@ -104,7 +104,8 @@ func (*HUD) drawItemTooltip(screen *ebiten.Image, item *building.Item) {
 		},
 	)
 	// Curses
-	for i, c := range item.Curses {
+	const maxCurses = 8
+	for i, c := range item.Curses[:min(len(item.Curses), maxCurses)] {
 		vx, ix = graphics.AppendRectVerticesIndices(
 			vx, ix, i+1, &graphics.RectOpts{
 				DstX:      logic.ScreenWidth/2 + itemCardWidth/2 + 48,
@@ -155,8 +156,15 @@ func (*HUD) drawItemTooltip(screen *ebiten.Image, item *building.Item) {
 	// Curses
 	for i, c := range item.Curses {
 		// Display up to 8 curses
-		if i >= 8 {
+		if i >= maxCurses {
 			// TODO: display a "+" to inform that there are more hidden?
+			str = fmt.Sprintf("%d more random curses.", len(item.Curses)-8)
+			topts.GeoM.Reset()
+			topts.GeoM.Translate(
+				logic.ScreenWidth/2+itemCardWidth/2+48+cursePictureSize+8,
+				64+float64(i*96),
+			)
+			text.Draw(screen, str, textFace, topts)
 			break
 		}
 		// Name

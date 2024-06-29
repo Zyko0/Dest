@@ -155,12 +155,14 @@ func (p *Player) Update(ctx *entity.Context) {
 					data.Radius,
 					data.Speed,
 					data.Damage,
+					data.Pull,
 					entity.TeamAlly,
 					data.ColorIn,
 					data.ColorOut,
 					data.Alpha,
 					data.MaxDuration,
 					data.Resistance,
+					data.Homing,
 				))
 				// Audio
 				assets.PlayShoot()

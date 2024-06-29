@@ -47,11 +47,11 @@ func (s *Shoot) Update(ctx *entity.Context) {
 		p := entity.NewProjectile(
 			ctx.Boss.Position().Add(dir.Mul(2.5)),
 			dir,
-			1, s.speed, 5,
+			1, s.speed, 5, 0,
 			entity.TeamEnemy,
 			color.RGBA{255, 192, 192, 255},
 			color.RGBA{220, 0, 0, 255},
-			1, 5*60, 1,
+			1, 5*60, 1, false,
 		)
 		ctx.Entities = append(ctx.Entities, p)
 		assets.PlayBossShoot()

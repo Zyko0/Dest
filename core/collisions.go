@@ -18,6 +18,7 @@ func (g *Game) handleCollisions() {
 	)
 	bossRadiusSq := g.Boss.Radius() * graphics.SpriteScale
 	bossRadiusSq *= bossRadiusSq
+	bossPullAmount := 0.
 	var playerTest bool
 	for _, e := range g.entities {
 		// Player
@@ -38,8 +39,17 @@ func (g *Game) handleCollisions() {
 			lenSq -= (bossRadiusSq + r*r)
 			if lenSq < 0 {
 				g.Boss.TakeHit(e.Damage())
+				if proj, ok := e.(*entity.Projectile); ok {
+					bossPullAmount += proj.Pull()
+				}
 				e.TakeHit(0)
 			}
 		}
+	}
+	// Apply inverse knockback on Boss if any
+	if bossPullAmount > 0 {
+		pos := g.Boss.Position()
+		pos = pos.Sub(g.camera.direction.Mul(bossPullAmount))
+		g.Boss.SetPosition(pos)
 	}
 }

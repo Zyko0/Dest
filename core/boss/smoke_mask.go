@@ -11,7 +11,6 @@ import (
 	"github.com/Zyko0/Alapae/graphics"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 type SmokeMask struct {
@@ -99,7 +98,6 @@ func (sm *SmokeMask) Update(ctx *entity.Context) {
 	if !sm.phase2init && sm.phase() == 1 {
 		sm.seq = newSequence(
 			NewChargeToEdge(),
-			NewRandomWalk(),
 			NewShoot(), NewShoot(),
 			NewMultiPattern(NewShoot(), NewRandomWalk()),
 			NewMultiPattern(NewShoot(), NewRandomWalk()),
@@ -108,6 +106,13 @@ func (sm *SmokeMask) Update(ctx *entity.Context) {
 			NewRandomWalk(),
 			NewShoot(),
 			NewMultiPattern(
+				NewShoot(), NewChargeToEdge(),
+				NewComet(), NewComet(), NewComet(),
+				NewComet(), NewComet(), NewComet(),
+				NewComet(), NewComet(), NewComet(),
+			),
+			NewMultiPattern(
+				NewShoot(), NewChargeToEdge(),
 				NewComet(), NewComet(), NewComet(),
 				NewComet(), NewComet(), NewComet(),
 				NewComet(), NewComet(), NewComet(),
@@ -118,29 +123,26 @@ func (sm *SmokeMask) Update(ctx *entity.Context) {
 		sm.phase2init = true
 	}
 	if sm.seq == nil {
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-			sm.seq = newSequence(
-				NewChargeToEdge(), NewChargeToEdge(), NewChargeToEdge(),
-				NewRandomWalk(),
-				NewShoot(), NewShoot(), NewRandomWalk(),
-				NewShoot(), NewShoot(), NewRandomWalk(),
-				NewShoot(), NewShoot(), NewRandomWalk(),
-				NewRandomWalk(),
-				NewMultiPattern(
-					NewShoot(), NewComet(), NewComet(), NewComet(),
-				),
-				NewRandomWalk(),
-				NewMultiPattern(
-					NewShoot(), NewComet(), NewComet(), NewComet(),
-				),
-				NewRandomWalk(),
-				NewMultiPattern(
-					NewShoot(), NewComet(), NewComet(), NewComet(),
-				),
-				NewRandomWalk(), NewRandomWalk(),
-			)
-
-		}
+		sm.seq = newSequence(
+			NewChargeToEdge(), NewChargeToEdge(), NewChargeToEdge(),
+			NewRandomWalk(),
+			NewShoot(), NewShoot(), NewRandomWalk(),
+			NewShoot(), NewShoot(), NewRandomWalk(),
+			NewShoot(), NewShoot(), NewRandomWalk(),
+			NewRandomWalk(),
+			NewMultiPattern(
+				NewShoot(), NewComet(), NewComet(), NewComet(),
+			),
+			NewRandomWalk(),
+			NewMultiPattern(
+				NewShoot(), NewComet(), NewComet(), NewComet(),
+			),
+			NewRandomWalk(),
+			NewMultiPattern(
+				NewShoot(), NewComet(), NewComet(), NewComet(),
+			),
+			NewRandomWalk(), NewRandomWalk(),
+		)
 	}
 	if sm.seq != nil {
 		sm.seq.Update(ctx)

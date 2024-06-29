@@ -115,7 +115,7 @@ func NewStats() *Stats {
 			opt.Text.Size(48),
 		),
 	)
-	settings := uiex.NewButtonText("Settings (Esc)").WithOptions(
+	settings := uiex.NewButtonText("Settings").WithOptions(
 		opt.ButtonText.Text(
 			opt.Text.AlignCenter(),
 			opt.Text.Color(softWhite),
@@ -227,8 +227,8 @@ func NewStats() *Stats {
 	)
 
 	s.layout.Grid().Add(12, 0, 8, 2, s.title)
-	s.layout.Grid().Add(1, 0, 5, 2, settings)
-	s.layout.Grid().Add(6, 0, 4, 2, restart)
+	s.layout.Grid().Add(1, 0, 4, 2, settings)
+	s.layout.Grid().Add(5, 0, 4, 2, restart)
 	s.layout.Grid().Add(1, 2, 30, 12, columns)
 	s.layout.Grid().Add(1, 15, 2, 2, s.descPic)
 	s.layout.Grid().Add(4, 15, 8, 1, s.descTitle)
@@ -350,12 +350,18 @@ func (s *Stats) Draw(screen *ebiten.Image) {
 }
 
 func (s *Stats) Enable() {
-	s.Active = true
-	s.RestartGame = false
-	s.Settings.active = false
+	if !s.Active {
+		s.Active = true
+		s.RestartGame = false
+		s.Settings.active = false
+	}
 }
 
 func (s *Stats) Disable() {
+	if s.Settings.active {
+		s.Settings.active = false
+		return
+	}
 	s.Active = false
 	s.RestartGame = false
 	s.Settings.active = false

@@ -28,7 +28,7 @@ type Game struct {
 	splash *ui.SplashView
 	stats  *ui.Stats
 
-	paused  bool
+	//paused  bool
 	updated bool
 }
 
@@ -60,7 +60,7 @@ func (g *Game) Update() error {
 		return nil
 	}
 	if g.stats.RestartGame || inpututil.IsKeyJustPressed(ebiten.KeyR) {
-		g.paused = false
+		//g.paused = false
 		g.stats.Disable()
 		g.game = core.NewGame(core.NewCamera(
 			mgl64.Vec3{0, 0, 0},
@@ -75,11 +75,9 @@ func (g *Game) Update() error {
 	}
 	if g.game.Player.Dead() {
 		g.stats.Enable()
-		g.paused = false
 		sctx.Title = "Game over"
 	} else if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
-		g.paused = !g.paused
-		if g.paused {
+		if !g.stats.Active {
 			g.stats.Enable()
 		} else {
 			g.stats.Disable()

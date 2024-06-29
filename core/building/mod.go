@@ -208,7 +208,7 @@ func (m *Mod) Apply(c *Core, hm *HandModifiers) {
 		case Delicate:
 			hm.Damage -= 10
 		case Love:
-			hm.InverseKnockback += 0.05
+			hm.InverseKnockback += 0.5
 		case Procrastination:
 		case Rest:
 			c.HealthPerStage++
@@ -238,7 +238,7 @@ type HandModifiers struct {
 
 func (hm *HandModifiers) reset() {
 	hm.Weapon = hand.WeaponFinger
-	hm.Damage = 5*1000
+	hm.Damage = 5
 	hm.CritChance = 0.05
 	hm.CritDamage = 2
 	hm.Accuracy = 1
@@ -360,6 +360,8 @@ type ProjectileData struct {
 	ColorIn     color.Color
 	ColorOut    color.Color
 	Alpha       float64
+	Pull        float64
+	Homing      bool
 	MaxDuration uint
 	Resistance  uint
 }
@@ -371,6 +373,8 @@ func (c *Core) Projectile(side hand.Side) *ProjectileData {
 	p.Crit = rand.Float64() < h.CritChance
 	p.Miss = rand.Float64() > h.Accuracy
 	p.Damage = h.Damage
+	p.Pull = h.InverseKnockback
+	p.Homing = h.Homing
 	p.ColorIn = color.White
 	if p.Crit {
 		p.Damage *= h.CritDamage

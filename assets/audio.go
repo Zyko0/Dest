@@ -120,7 +120,7 @@ func init() {
 	smCometSoundPlayer = newSFXPlayer(smCometSoundBytes)
 	bossChargeSoundPlayer = newSFXPlayer(bossChargeSoundBytes)
 	bonusSoundPlayer = newSFXPlayer(bonusSoundBytes)
-	bonusSoundPlayer.SetVolume(0.5)
+	bonusSoundPlayer.SetVolume(0.25)
 	portalSoundPlayer = newSFXPlayer(portalSoundBytes)
 
 	boss0MusicPlayer = newMusicPlayer(boss0MusicBytes)
@@ -144,7 +144,7 @@ func SetSFXVolume(v float64) {
 	bossShootSoundPlayer.SetVolume(v)
 	smCometSoundPlayer.SetVolume(v)
 	bossChargeSoundPlayer.SetVolume(v)
-	bonusSoundPlayer.SetVolume(v * 0.5)
+	bonusSoundPlayer.SetVolume(v * 0.25)
 	portalSoundPlayer.SetVolume(v)
 }
 

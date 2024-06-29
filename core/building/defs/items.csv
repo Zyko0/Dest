@@ -15,7 +15,7 @@ id,rarity,hand,name,description,max_stacks
 13,2,0,Curse advantage,+5 flat damage to your %s for each active curse in this hand.,-1
 14,2,0,Survivor,+1 flat damage to your %s for each 5 health points missing from 100 (up to +19).,-1
 15,3,1,Dual critical chance,+5%% critical hit chance (exceeding critical hit chance converts to %% critical damage) to %s.,-1
-16,3,0,Pistol,"Equip a pistol in your %s, shoots a slower piercing projectile dealing damage every tick it is in contact with the target.",1
+16,3,0,Pistol,"Equip a pistol in your %s, shoots slower piercing projectiles dealing damage 3 times per second (10 times max).",1
 17,3,0,Extra shot,Shoots an additional projectile with your %s,10
 18,3,0,Dual curse advantage,+5 flat damage to your %s for each active curse from ALL sources.,-1
 19,3,2,Change of mind,Swap all items (not curses) from both hands.,-1

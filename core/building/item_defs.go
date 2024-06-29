@@ -195,7 +195,7 @@ var (
 			Kind:        Epic,
 			Hand:        SingleHand,
 			Name:        "Pistol",
-			Description: "Equip a pistol in your %s, shoots a slower piercing projectile dealing damage every tick it is in contact with the target.",
+			Description: "Equip a pistol in your %s, shoots slower piercing projectiles dealing damage 3 times per second (10 times max).",
 			MaxStacks:   1,
 			Rect:        image.Rect(256, 256, 384, 384),
 		},

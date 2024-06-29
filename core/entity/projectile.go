@@ -8,6 +8,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+const dotFrequency = 20
+
 type Projectile struct {
 	team       Team
 	pos        mgl64.Vec3
@@ -18,14 +20,17 @@ type Projectile struct {
 	radius     float64
 	speed      float64
 	dmg        float64
+	pull       float64
 	duration   uint
 	resistance uint
+	homing     bool
 
-	ticks uint
-	dead  bool
+	lastHit uint
+	ticks   uint
+	dead    bool
 }
 
-func NewProjectile(pos, dir mgl64.Vec3, radius, speed, dmg float64, team Team, clrIn, clrOut color.Color, alpha float64, duration, resistance uint) *Projectile {
+func NewProjectile(pos, dir mgl64.Vec3, radius, speed, dmg, pull float64, team Team, clrIn, clrOut color.Color, alpha float64, duration, resistance uint, homing bool) *Projectile {
 	return &Projectile{
 		team:       team,
 		pos:        pos,
@@ -36,8 +41,10 @@ func NewProjectile(pos, dir mgl64.Vec3, radius, speed, dmg float64, team Team, c
 		radius:     radius,
 		speed:      speed,
 		dmg:        max(dmg, 0),
+		pull:       pull,
 		duration:   duration,
 		resistance: resistance,
+		homing:     homing,
 	}
 }
 
@@ -45,18 +52,31 @@ func (p *Projectile) Team() Team {
 	return p.team
 }
 
+func (p *Projectile) Pull() float64 {
+	return p.pull
+}
+
 func (p *Projectile) Damage() float64 {
+	if p.lastHit != 0 && p.ticks-p.lastHit < dotFrequency {
+		return 0
+	}
 	return p.dmg
 }
 
 func (p *Projectile) TakeHit(_ float64) {
 	if p.resistance > 0 {
-		p.resistance -= 1
+		if p.lastHit == 0 || p.ticks-p.lastHit >= dotFrequency {
+			p.lastHit = p.ticks
+			p.resistance -= 1
+		}
 	}
 }
 
-func (p *Projectile) Update(_ *Context) {
-	p.pos = p.pos.Add(p.dir.Mul(p.speed)) // TODO:
+func (p *Projectile) Update(ctx *Context) {
+	if p.homing && ctx.Boss != nil && !ctx.Boss.Dead() {
+		p.dir = ctx.Boss.Position().Sub(p.pos).Normalize()
+	}
+	p.pos = p.pos.Add(p.dir.Mul(p.speed))
 	p.ticks++
 }
 
