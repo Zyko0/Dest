@@ -48,7 +48,6 @@ func (g *Game) Update() error {
 		return nil
 	}
 	if g.stats.RestartGame || inpututil.IsKeyJustPressed(ebiten.KeyR) {
-		//g.paused = false
 		g.stats.Disable()
 		g.game = core.NewGame(core.NewCamera(
 			mgl64.Vec3{0, 0, 0},
