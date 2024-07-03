@@ -65,6 +65,7 @@ func (g *Game) Update() error {
 		sctx.Title = "Game over"
 	} else if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
 		if !g.stats.Active {
+			ebiten.SetCursorMode(ebiten.CursorModeVisible)
 			g.stats.Enable()
 		} else {
 			g.stats.Disable()
@@ -72,10 +73,11 @@ func (g *Game) Update() error {
 	}
 	if g.stats.Active {
 		input.SetLastCursor(ebiten.CursorPosition())
-		ebiten.SetCursorMode(ebiten.CursorModeVisible)
 		g.stats.Update(sctx)
 		g.updated = true
 		return nil
+	} else {
+		ebiten.SetCursorMode(ebiten.CursorModeCaptured)
 	}
 
 	if !input.EnsureCursorCaptured() {

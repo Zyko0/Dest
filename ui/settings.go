@@ -10,7 +10,6 @@ import (
 	"github.com/Zyko0/Ebiary/ui/opt"
 	"github.com/Zyko0/Ebiary/ui/uiex"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 type sliderBar struct {
@@ -161,10 +160,6 @@ func newSettings() *Settings {
 }
 
 func (s *Settings) Update() {
-	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
-		s.active = false
-		return
-	}
 	// Update layout
 	s.layout.Update(s.offset, ui.GetInputState())
 }

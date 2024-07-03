@@ -359,6 +359,7 @@ func (s *Stats) Enable() {
 
 func (s *Stats) Disable() {
 	if s.Settings.active {
+		s.RestartGame = false
 		s.Settings.active = false
 		return
 	}
